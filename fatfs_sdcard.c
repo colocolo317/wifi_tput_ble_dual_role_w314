@@ -20,8 +20,10 @@
 #include "fatfs.h"
 #include "ff.h"
 
+#include "dummyfile.h"
 
 
+#define MAX_READ_BUF_LEN 4096
 
 
 /*******************************************************************************
@@ -209,6 +211,13 @@ void StartSDManager(void const *argument) {
 
   UNUSED_PARAMETER(argument);
   unsigned int read;
+  unsigned int bytesWrote;
+
+  //const uint8_t max_rbuf_len = 128;
+
+  uint8_t readBuf[MAX_READ_BUF_LEN] = {0};
+  //uint8_t writeBuf[30] = {0};
+
   /* Infinite loop */
   printf("\nStartSDManager!\n");
 
@@ -234,25 +243,36 @@ void StartSDManager(void const *argument) {
         dmesg(fres);
       }
 #endif
-      uint8_t readBuf[30];
+
 
 #if 1
       // Read File
-      fres = f_open(&fil, "TEST.TXT", FA_OPEN_ALWAYS |FA_WRITE );
+      fres = f_open(&fil, "WRITE.TXT", FA_OPEN_ALWAYS |FA_READ );
       if (fres == FR_OK)
       {
         //int res = f_gets((TCHAR*)readBuf, 30, &fil);
-          int res = f_read(&fil, readBuf, 30, &read);
-          printf("\r\nres:%d recvLen:%d", res, read);
-        if (res != 0) {
-            printf("\n[SDManager]: Read File");
-            printf("\n[SDManager]: 'test.txt' contents: %s\r\n",
-              readBuf);
-        }
-        else
-        {
-            printf("\n[SDManager] f_open failure:%d", fres);
-        }
+          uint32_t start_time = osKernelGetTickCount();
+          uint32_t total_byteread = 0;
+          int res;
+
+          do{
+              res = f_read(&fil, readBuf, MAX_READ_BUF_LEN, &read);
+              if (res == FR_OK) {
+                  //printf("\n[SDManager]: Read File res:%d recvLen:%d \r\n", res, read);
+                  //printf("\n[SDManager]: 'test.txt' contents: %s\r\n", readBuf);
+                  total_byteread += read;
+              }
+              else
+              {
+                  printf("\n[SDManager] Read File failure:%d", fres);
+                  dmesg(res);
+              }
+          }while(!f_eof(&fil));
+
+          uint32_t duration   = osKernelGetTickCount() - start_time;
+
+
+        printf("\r\n Read File Duration: (%lums), total read: %lu byte\r\n", duration, total_byteread);
       }
       else
       {
@@ -263,23 +283,27 @@ void StartSDManager(void const *argument) {
       osDelay(100);
 #endif
 
-#if 0
+#if 1
       // Write File
       fres = f_open(&fil, "write.txt",
-      FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
+      FA_WRITE | FA_OPEN_ALWAYS );
       if (fres == FR_OK) {
         //Copy in a string
-        strncpy((char*) readBuf, "I hate Java!", 12);
-        uint8_t bytesWrote;
-        fres = f_write(&fil, readBuf, 12, &bytesWrote);
+        //strncpy((char*) writeBuf, "I hate Java!", 13);
+        //uint8_t bytesWrote;
+        uint32_t start_time = osKernelGetTickCount();
+        fres = f_write(&fil, dummy_file, dummy_file_len, &bytesWrote);
+        uint32_t duration   = osKernelGetTickCount() - start_time;
         if (fres == FR_OK) {
             printf("\n[SDManager]: Write File");
             printf("\n[SDManager]: Wrote %i bytes to 'write.txt'!\r\n",
               bytesWrote);
+
         } else {
             printf("\n[SDManager][Write_File]: ");
           dmesg(fres);
         }
+        printf("\r\nDuration: (%lums)\r\n", duration);
       } else {
           printf("\n[SDManager][Create_File]: ");
         dmesg(fres);

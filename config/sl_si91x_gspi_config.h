@@ -45,11 +45,11 @@ extern "C" {
 //   <SL_GSPI_MODE_0=> Mode 0
 //   <SL_GSPI_MODE_3=> Mode 3
 // <i> Selection of the GSPI Mode.
-#define SL_GSPI_CLOCK_MODE SL_GSPI_MODE_0
+#define SL_GSPI_CLOCK_MODE SL_GSPI_MODE_3
 
 // <o SL_GSPI_BITRATE> Bit Rate (Bits/Second) <1-40000000>
 // <i> Default: 10000000
-#define SL_GSPI_BITRATE 10000000
+#define SL_GSPI_BITRATE 40000000
 
 // <o SL_GSPI_BIT_WIDTH> Data Width <1-15>
 // <i> Default: 8

@@ -1661,11 +1661,6 @@
 			<locationURI>STUDIO_SDK_LOC/extension/wiseconnect/components/device/silabs/si91x/mcu/drivers/unified_api/src/sl_si91x_driver_gpio.c</locationURI>
 		</link>
 		<link>
-			<name>wiseconnect3_sdk_3.1.3/components/device/silabs/si91x/mcu/drivers/unified_api/src/sl_si91x_gspi.c</name>
-			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/extension/wiseconnect/components/device/silabs/si91x/mcu/drivers/unified_api/src/sl_si91x_gspi.c</locationURI>
-		</link>
-		<link>
 			<name>wiseconnect3_sdk_3.1.3/components/device/silabs/si91x/mcu/drivers/unified_peripheral_drivers/inc/sl_si91x_gpio.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/extension/wiseconnect/components/device/silabs/si91x/mcu/drivers/unified_peripheral_drivers/inc/sl_si91x_gpio.h</locationURI>

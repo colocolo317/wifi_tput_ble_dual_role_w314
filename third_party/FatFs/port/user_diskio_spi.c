@@ -60,7 +60,7 @@ static void callback_event(uint32_t event);
 #define DVISION_FACTOR          0         // Division factor
 #define SWAP_READ_DATA          1         // true to enable and false to disable swap read
 #define SWAP_WRITE_DATA         0         // true to enable and false to disable swap write
-#define GSPI_BITRATE            400000    // Bitrate for setting the clock division factor
+#define GSPI_BITRATE            12000000    // Bitrate for setting the clock division factor
 #define GSPI_BIT_WIDTH          8         // Default Bit width
 #define MAX_BIT_WIDTH           16        // Maximum Bit width
 
@@ -143,7 +143,7 @@ sdcard_spi_t sdcard_spi =
 
 //(Note that the _256 is used as a mask to clear the prescalar bits as it provides binary 111 in the correct position)
 #define FCLK_SLOW() { sdcard_spi.config.bitrate = 400000; sl_si91x_gspi_set_configuration(sdcard_spi.handle, &sdcard_spi.config); }  /* Set SCLK = slow, approx 280 KBits/s*/
-#define FCLK_FAST() { sdcard_spi.config.bitrate = 10000000; sl_si91x_gspi_set_configuration(sdcard_spi.handle, &sdcard_spi.config); }  /* Set SCLK = fast, approx 4.5 MBits/s */
+#define FCLK_FAST() { sdcard_spi.config.bitrate = 40000000; sl_si91x_gspi_set_configuration(sdcard_spi.handle, &sdcard_spi.config); }  /* Set SCLK = fast, approx 4.5 MBits/s */
 
 //
 #define CS_HIGH() { sl_gpio_set_pin_output(sdcard_spi.soft_cs.port, sdcard_spi.soft_cs.pin); }
@@ -331,7 +331,7 @@ static void rcvr_spi_multi ( BYTE *buff,		/* Pointer to data buffer */
 		*(buff+i) = xchg_spi(0xFF);
 	}
 #else
-	static uint8_t dummy[512] ;
+	static uint8_t dummy[_MIN_SS] ;
   osSemaphoreAcquire(sdcard_spi.lock, osWaitForever);
 
   //FIXME. we should use sl_si91x_gspi_receive_data()
@@ -356,8 +356,8 @@ void xmit_spi_multi (
 	UINT btx			/* Number of bytes to send (even number) */
 )
 {
-  static uint8_t dummy[512] ;
-  printf("xmit_spi_multi tx len%d\r\n", btx);
+  static uint8_t dummy[_MIN_SS] ;
+  //printf("xmit_spi_multi tx len%d\r\n", btx);
 #if 0
 	for(UINT i=0; i<btx; i++) {
 		xchg_spi(*(buff+i));
@@ -473,7 +473,7 @@ int xmit_datablock (	/* 1:OK, 0:Failed */
 {
 	BYTE resp;
 
-  printf("xmit_datablock");
+  //printf("xmit_datablock");
 
 	if (!wait_ready(500)) return 0;		/* Wait for card ready */
 
