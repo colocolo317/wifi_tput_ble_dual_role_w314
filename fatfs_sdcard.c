@@ -3,27 +3,19 @@
 //  ! INCLUDES
 /*=======================================================================*/
 #include "cmsis_os2.h"
-
 #include <stdio.h>
 #include <string.h>
-
 #include "app_common_config.h"
 #include "rsi_common_apis.h"
-
-
-
 #include "rsi_debug.h"
-
 #include "freertos.h"
-
 //! FatFS
 #include "fatfs.h"
 #include "ff.h"
-
 #include "dummyfile.h"
+#include "sdcard.h"
 
 
-#define MAX_READ_BUF_LEN 4096
 
 
 /*******************************************************************************
@@ -54,15 +46,35 @@ FATFS FatFs;   // FATFS handle
 FRESULT fres;  // Common result code
 FILINFO fno;    // Structure holds information
 FATFS *getFreeFs;     // Read information
-FIL fil;
+static FIL fil;
 DIR dir;        // Directory object structure
 DWORD free_clusters;  // Free Clusters
 DWORD free_sectors;   // Free Sectors
 DWORD total_sectors;  // Total Sectors
 
+static unsigned int read;
+static unsigned int bytesWrote;
 
+#if 0
+static uint32_t sdcard_app_event_map;
+/*==============================================*/
+/**
+ * @fn         sdcard_app_set_event
+ * @brief      sets the specific event.
+ * @param[in]  event_num, specific event number.
+ * @return     none.
+ * @section description
+ * This function is used to set/raise the specific event.
+ */
+void sdcard_app_set_event(uint32_t event_num)
+{
+  sdcard_app_event_map |= event_num;
 
+  osMutexRelease(SDCardMutexHandle);
 
+  return;
+}
+#endif
 
 void dmesg(FRESULT fres) {
 
@@ -210,8 +222,8 @@ void StartSDinfo(void const *argument)
 void StartSDManager(void const *argument) {
 
   UNUSED_PARAMETER(argument);
-  unsigned int read;
-  unsigned int bytesWrote;
+  //int32_t event_id = 0;
+
 
   //const uint8_t max_rbuf_len = 128;
 
@@ -326,11 +338,45 @@ void StartSDManager(void const *argument) {
 }
 
 
+FRESULT sdcard_write(const void* data, const unsigned int len)
+{
+  return f_write(&fil, data, len, &bytesWrote);
+}
+
+
+FIL* sdcard_get_wfile(){
+  return &fil;
+}
+
 void fatfs_sdcard_init(void)
 {
 
   MX_FATFS_Init();
 
+  printf("\nStartSDManager!\n");
+
+  printf("\n[SDManager]: Mount SDCard\r\n");
+
+  fres = f_mount(&FatFs, "", 1); // 1 -> Mount now
+  if (fres == FR_OK)
+  {
+      printf("Mount success\r\n");
+      ls("");
+      printf("\r\n");
+  }
+  else{ dmesg(fres); }
+
+  char ofile_name[] = "write2.txt";
+  // Write File
+  fres = f_open(&fil, ofile_name, FA_WRITE | FA_OPEN_ALWAYS );
+  if (fres == FR_OK) {
+      printf("\r\nFile \"%s\" open\r\n", ofile_name);
+      bytesWrote = 0; //RESET
+  }
+  else{ dmesg(fres); }
+
+
+#if 0
   SDCardMutexHandle = osMutexNew(NULL);
   //osMutexRelease(SDCardMutexHandle);
 
@@ -343,7 +389,12 @@ void fatfs_sdcard_init(void)
 #endif
   /* definition and creation of SDManager */
   //osThreadDef(SDManager, StartSDManager, osPriorityRealtime, 0, 300);
+#endif
 
-
+}
+void sdcard_ends(){
+  f_close(&fil);
+  f_mount(NULL, "", 0);
+  printf("\n[SDManager]: Unmount SDCard\r\n");
 }
 

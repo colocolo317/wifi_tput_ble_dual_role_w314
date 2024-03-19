@@ -52,6 +52,8 @@
 									<listOptionValue builtIn="false" value="-Wall"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.218511523" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/wiseconnect3_sdk_3.1.3/components/service/bsd_socket/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/wiseconnect3_sdk_3.1.3/components/device/silabs/si91x/wireless/inc/http_client/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/third_party/FatFs/port}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/third_party/FatFs/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/config}&quot;"/>
@@ -91,7 +93,6 @@
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/util/third_party/freertos/kernel/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/util/third_party/freertos/kernel/portable/GCC/ARM_CM4F&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/service/system/inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/wiseconnect3_sdk_3.1.3/components/device/silabs/si91x/wireless/inc/http_client/inc}&quot;"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.compiler.def.symbols.967380081" name="Defined symbols (-D)" superClass="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.c.compiler.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="xHIGH_THROUGHPUT_EN=1"/>
@@ -163,6 +164,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/config}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/autogen}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/wiseconnect3_sdk_3.1.3/components/device/silabs/si91x/wireless/inc/http_client/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/wiseconnect3_sdk_3.1.3/components/service/bsd_socket/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/extension/wiseconnect/components/device/silabs/si91x/wireless/ble/inc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/extension/wiseconnect/components/service/bsd_socket/si91x_socket&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/extension/wiseconnect/components/service/bsd_socket/inc&quot;"/>
@@ -197,7 +200,6 @@
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/util/third_party/freertos/kernel/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/util/third_party/freertos/kernel/portable/GCC/ARM_CM4F&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/platform/service/system/inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/wiseconnect3_sdk_3.1.3/components/device/silabs/si91x/wireless/inc/http_client/inc}&quot;"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.as.def.symbols.1330019720" name="Defined symbols (-D)" superClass="com.silabs.ide.si32.gcc.cdt.managedbuild.tool.gnu.as.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="SL_SI91X_PRINT_DBG_LOG=1"/>

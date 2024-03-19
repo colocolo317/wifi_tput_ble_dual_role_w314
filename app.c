@@ -35,6 +35,8 @@
 #include "sl_net.h"
 #include "sl_http_client.h"
 #include <string.h>
+#include "sdcard.h"
+
 
 //! Include index html page
 #include "index.html.h"
@@ -125,7 +127,9 @@
 
 #define HTTP_SYNC_RESPONSE  0
 #define HTTP_ASYNC_RESPONSE 1
-
+#if 0
+osSemaphoreId_t sdcard_thread_sem;
+#endif
 /******************************************************
  *               Variable Definitions
  ******************************************************/
@@ -171,6 +175,7 @@ uint32_t app_buff_index = 0;
 volatile uint8_t http_rsp_received = 0;
 volatile uint8_t end_of_file       = 0;
 sl_status_t callback_status        = SL_STATUS_OK;
+//FIL* pfile;
 /******************************************************
  *               Function Declarations
  ******************************************************/
@@ -227,6 +232,8 @@ static void application_start(void *argument)
   }
   printf("\r\nLoad TLS CA certificate at index %d Success\r\n", CERTIFICATE_INDEX);
 #endif
+  fatfs_sdcard_init();
+  //pfile = sdcard_get_wfile();
 
   status = http_client_application();
   if (status != SL_STATUS_OK) {
@@ -292,63 +299,6 @@ sl_status_t http_client_application(void)
   VERIFY_STATUS_AND_RETURN(status);
   printf("\r\nHTTP Client init success\r\n");
 
-#if 0 //javi
-  //! Configure HTTP PUT request
-  client_request.http_method_type = SL_HTTP_PUT;
-  client_request.body             = NULL;
-  client_request.body_length      = total_put_data_len;
-
-  //! Initialize callback method for HTTP PUT request
-  status = sl_http_client_request_init(&client_request, http_put_response_callback_handler, "This is HTTP client");
-  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
-  printf("\r\nHTTP PUT request init success\r\n");
-
-#if EXTENDED_HEADER_ENABLE
-  //! Add extended headers
-  status = sl_http_client_add_header(&client_request, KEY1, VAL1);
-  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
-
-  status = sl_http_client_add_header(&client_request, KEY2, VAL2);
-  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
-
-  status = sl_http_client_add_header(&client_request, KEY3, VAL3);
-  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
-
-  status = sl_http_client_add_header(&client_request, KEY4, VAL4);
-  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
-#endif
-
-  //! Send HTTP PUT request
-  status = sl_http_client_send_request(&client_handle, &client_request);
-  if (status == SL_STATUS_IN_PROGRESS) {
-    status = http_response_status(&http_rsp_received);
-    CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_ASYNC_RESPONSE);
-  } else {
-    CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
-  }
-
-  //! Write HTTP PUT data
-  while (!end_of_file) {
-    //! Get the current length that you want to send
-    chunk_length = ((total_put_data_len - offset) > SL_HTTP_CLIENT_MAX_WRITE_BUFFER_LENGTH)
-                     ? SL_HTTP_CLIENT_MAX_WRITE_BUFFER_LENGTH
-                     : (total_put_data_len - offset);
-
-    status = sl_http_client_write_chunked_data(&client_handle, (uint8_t *)(sl_index + offset), chunk_length, 0);
-
-    if (status == SL_STATUS_IN_PROGRESS) {
-      status = http_response_status(&http_rsp_received);
-      CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_ASYNC_RESPONSE);
-
-      offset += chunk_length;
-    } else {
-      CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
-    }
-  }
-
-  printf("\r\nHTTP PUT request Success!\r\n");
-  reset_http_handles();
-#endif // javier
 
   //! Configure HTTP GET request
   client_request.http_method_type = SL_HTTP_GET;
@@ -361,6 +311,7 @@ sl_status_t http_client_application(void)
   //! Send HTTP GET request
   status = sl_http_client_send_request(&client_handle, &client_request);
   uint32_t start_time = osKernelGetTickCount();
+  printf("\r\n==Start measure time==\r\n");
   printf("\r\nHTTP Get request status=%lx\r\n", status); //javi
   if (status == SL_STATUS_IN_PROGRESS) {
     printf("\r\n SL_STATUS_IN_PROGRESS\r\n"); //javi
@@ -491,14 +442,20 @@ sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
   if (!get_response->end_of_data) {
     //memcpy(app_buffer + app_buff_index, get_response->data_buffer, get_response->data_length);
       //printf("(%u)",get_response->data_length);
-      memcpy(app_buffer, get_response->data_buffer, get_response->data_length);  //javi
-    app_buff_index += get_response->data_length;
+      //memcpy(app_buffer, get_response->data_buffer, get_response->data_length);  //javi
+      FRESULT fres = sdcard_write(get_response->data_buffer, get_response->data_length);
+      if(fres != FR_OK){dmesg(fres);}
+      app_buff_index += get_response->data_length;
+
   } else {
     if (get_response->data_length) {
       //memcpy(app_buffer + app_buff_index, get_response->data_buffer, get_response->data_length);
         //printf("(%u)",get_response->data_length);
-        memcpy(app_buffer, get_response->data_buffer, get_response->data_length);  //javi
+        //memcpy(app_buffer, get_response->data_buffer, get_response->data_length);  //javi
+        FRESULT fres = sdcard_write(get_response->data_buffer, get_response->data_length);
+        if(fres != FR_OK){dmesg(fres);}
       app_buff_index += get_response->data_length;
+      sdcard_ends();
     }
     http_rsp_received = HTTP_SUCCESS_RESPONSE;
   }
@@ -564,9 +521,18 @@ static void reset_http_handles(void)
 
 void app_init(const void *unused)
 {
+
+
   UNUSED_PARAMETER(unused);
+#if 0
+  sdcard_thread_sem = osSemaphoreNew(1, 0, NULL);
+  if (sdcard_thread_sem == NULL) {
+    LOG_PRINT("Failed to create sdcard_thread_sem\n");
+    return;
+  }
+#endif
+
   osThreadNew((osThreadFunc_t)application_start, NULL, &thread_attributes);
 
-  //extern void fatfs_sdcard_init();
-  //fatfs_sdcard_init();
+
 }
