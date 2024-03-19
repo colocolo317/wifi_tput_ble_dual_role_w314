@@ -32,10 +32,10 @@
 /*=======================================================================================================*/
 //!	 APP CONFIG defines
 /*=======================================================================================================*/
-#define SSID              "AndroidAP5655" //! Access point SSID to connect
+#define SSID              "sw3" //! Access point SSID to connect
 #define SECURITY_TYPE     SL_WIFI_WPA2    //! Security type -  RSI_WPA2 or RSI_OPEN
 #define CHANNEL_NO        0               //! Channel in which device should scan, 0 - scan all channels
-#define PSK               "12345678"      //! Password
+#define PSK               "63225747"      //! Password
 #define DEVICE_PORT       5005            //! Module port number
 #define SERVER_PORT       5000            //! Server port number
 #define SERVER_IP_ADDRESS "192.168.43.99" //! Server IP address

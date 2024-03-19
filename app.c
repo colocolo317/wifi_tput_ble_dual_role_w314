@@ -1,492 +1,572 @@
-/*******************************************************************************
-* @file  app.c
-* @brief
-*******************************************************************************
-* # License
-* <b>Copyright 2023 Silicon Laboratories Inc. www.silabs.com</b>
-*******************************************************************************
-*
-* The licensor of this software is Silicon Laboratories Inc. Your use of this
-* software is governed by the terms of Silicon Labs Master Software License
-* Agreement (MSLA) available at
-* www.silabs.com/about-us/legal/master-software-license-agreement. This
-* software is distributed to you in Source Code format and is governed by the
-* sections of the MSLA applicable to Source Code.
-*
-******************************************************************************/
-/**
- * @file    app.c
- * @version 0.1
- * @date    01 Feb 2021
- *
- *  @section Licenseremote_name
- *  This program should be used on your own responsibility.
- *  Silicon Labs assumes no responsibility for any losses
- *  incurred by customers or third parties arising from the use of this file.
- *
- *  @brief : This file contains example application for device initialization
- *
- *  @section Description  This application initiates SiLabs device and create tasks.
- */
 
-/*=======================================================================*/
-//  ! INCLUDES
-/*=======================================================================*/
 
-#include <stdio.h>
+/***************************************************************************/ /**
+ * @file
+ * @brief HTTP Client Application
+ *******************************************************************************
+ * # License
+ * <b>Copyright 2022 Silicon Laboratories Inc. www.silabs.com</b>
+ *******************************************************************************
+ *
+ * SPDX-License-Identifier: Zlib
+ *
+ * The licensor of this software is Silicon Laboratories Inc.
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ *
+ ******************************************************************************/
+#include "sl_board_configuration.h"
+#include "cmsis_os2.h"
+#include "sl_wifi.h"
+#include "sl_net.h"
+#include "sl_http_client.h"
 #include <string.h>
 
-#include "app_common_config.h"
-#include "wifi_app_config.h"
-#include "sl_utility.h"
+//! Include index html page
+#include "index.html.h"
+/******************************************************
+ *                      Macros
+ ******************************************************/
+#define CLEAN_HTTP_CLIENT_IF_FAILED(status, client_handle, is_sync) \
+  {                                                                 \
+    if (status != SL_STATUS_OK) {                                   \
+      sl_http_client_deinit(client_handle);                         \
+      return ((is_sync == 0) ? status : callback_status);           \
+    }                                                               \
+  }
 
-//! BLE include file to refer BLE APIs
-#include "ble_config.h"
-#include "rsi_bt_common_apis.h"
-#include "rsi_common_apis.h"
+/******************************************************
+ *                    Constants
+ ******************************************************/
+//! HTTP Client Configurations
+#define HTTP_CLIENT_USERNAME "admin"
+#define HTTP_CLIENT_PASSWORD "admin"
 
-//! SL Wi-Fi SDK includes
-#include "sl_wifi.h"
-#include "sl_wifi_callback_framework.h"
-#include "cmsis_os2.h"
+#define IP_VERSION   SL_IPV4
+#define HTTP_VERSION SL_HTTP_V_1_1
 
-/*=======================================================================*/
-//   ! MACROS
-/*=======================================================================*/
+//! Set 1 - Enable and 0 - Disable
+#define HTTPS_ENABLE 0
 
-/*=======================================================================*/
-//   ! GLOBAL VARIABLES
-/*=======================================================================*/
-//! flag to check bt power save
-#if RSI_ENABLE_BLE_TEST
-rsi_parsed_conf_t rsi_parsed_conf = { 0 };
-osSemaphoreId_t ble_main_task_sem, ble_peripheral_conn_sem;
-bool rsi_ble_running;
+//! Set 1 - Enable and 0 - Disable
+#define EXTENDED_HEADER_ENABLE 0
+
+#if HTTPS_ENABLE
+//! Set TLS version
+#define TLS_VERSION SL_TLS_V_1_2
+
+#define CERTIFICATE_INDEX SL_HTTPS_CLIENT_CERTIFICATE_INDEX_1
+
+//! Include SSL CA certificate
+#include "cacert.pem.h"
+
+//! Load certificate to device flash :
+//! Certificate could be loaded once and need not be loaded for every boot up
+#define LOAD_CERTIFICATE 1
 #endif
 
-bool other_protocol_activity_enabled = false;
+//! HTTP request configurations
+//! Set HTTP Server IP Address
+#define HTTP_SERVER_IP "10.10.28.166"
 
-#if (RSI_ENABLE_BLE_TEST && WLAN_THROUGHPUT_TEST)
-osSemaphoreId_t ble_wlan_throughput_sync_sem;
-#endif
-
-#if WLAN_SYNC_REQ
-osSemaphoreId_t sync_coex_ble_sem;
-#endif
-
-osThreadId_t wlan_app_thread_id;
-osThreadId_t common_app_thread_id;
-bool rsi_wlan_running;
-
-#if ENABLE_POWER_SAVE
-bool powersave_cmd_given;
-osMutexId_t power_cmd_mutex;
-sl_wifi_performance_profile_t wifi_profile = { .profile = STANDBY_POWER_SAVE_WITH_RAM_RETENTION };
-#endif
-
-// TCP IP BYPASS feature check
-#define RSI_TCP_IP_BYPASS RSI_DISABLE
-
-static const sl_wifi_device_configuration_t config = {
-  .boot_option = LOAD_NWP_FW,
-  .mac_address = NULL,
-  .band        = SL_SI91X_WIFI_BAND_2_4GHZ,
-  .region_code = US,
-  .boot_config = { .oper_mode              = SL_SI91X_CLIENT_MODE,
-                   .coex_mode              = SL_SI91X_WLAN_BLE_MODE,
-                   .feature_bit_map        = (SL_SI91X_FEAT_SECURITY_OPEN | SL_SI91X_FEAT_AGGREGATION
-                                       | SL_SI91X_FEAT_ULP_GPIO_BASED_HANDSHAKE | SL_SI91X_FEAT_DEV_TO_HOST_ULP_GPIO_1),
-                   .tcp_ip_feature_bit_map = (SL_SI91X_TCP_IP_FEAT_DHCPV4_CLIENT
-#if (!RSI_TCP_IP_BYPASS)
-                                              | SL_SI91X_TCP_IP_FEAT_EXTENSION_VALID | SL_SI91X_TCP_IP_FEAT_DNS_CLIENT
-                                              | SL_SI91X_TCP_IP_FEAT_SSL
-#endif
-                                              ),
-                   .custom_feature_bit_map =
-                     (SL_SI91X_CUSTOM_FEAT_EXTENTION_VALID | SL_SI91X_CUSTOM_FEAT_SOC_CLK_CONFIG_120MHZ),
-                   .ext_custom_feature_bit_map = (MEMORY_CONFIG | SL_SI91X_EXT_FEAT_XTAL_CLK
-#ifdef SLI_SI917
-                                                  | SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-#endif
-#if ENABLE_POWER_SAVE
-                                                  | SL_SI91X_EXT_FEAT_LOW_POWER_MODE
-#endif
-                                                  | SL_SI91X_EXT_FEAT_BT_CUSTOM_FEAT_ENABLE),
-                   .bt_feature_bit_map         = (SL_SI91X_BT_RF_TYPE | SL_SI91X_ENABLE_BLE_PROTOCOL),
-                   .ext_tcp_ip_feature_bit_map = (
-#ifdef RSI_PROCESS_MAX_RX_DATA
-                     SL_SI91X_EXT_TCP_MAX_RECV_LENGTH
+//! Server port number
+#if HTTPS_ENABLE
+//! Set default HTTPS port
+#define HTTP_PORT 443
 #else
-                     SL_SI91X_EXT_TCP_IP_WINDOW_DIV
+//! Set default HTTP port
+#define HTTP_PORT 80
 #endif
-#if USE_SELECT_FEATURE
-                     | SL_SI91X_EXT_TCP_IP_TOTAL_SELECTS(1)
-#endif
-                     | SL_SI91X_CONFIG_FEAT_EXTENTION_VALID),
-                   //!ENABLE_BLE_PROTOCOL in bt_feature_bit_map
-                   .ble_feature_bit_map =
-                     ((SL_SI91X_BLE_MAX_NBR_PERIPHERALS(RSI_BLE_MAX_NBR_PERIPHERALS)
-                       | SL_SI91X_BLE_MAX_NBR_CENTRALS(RSI_BLE_MAX_NBR_CENTRALS)
-                       | SL_SI91X_BLE_MAX_NBR_ATT_SERV(RSI_BLE_MAX_NBR_ATT_SERV)
-                       | SL_SI91X_BLE_MAX_NBR_ATT_REC(RSI_BLE_MAX_NBR_ATT_REC))
-                      | SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | SL_SI91X_BLE_PWR_INX(RSI_BLE_PWR_INX)
-                      | SL_SI91X_BLE_PWR_SAVE_OPTIONS(RSI_BLE_PWR_SAVE_OPTIONS)
-                      | SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
-#if RSI_BLE_GATT_ASYNC_ENABLE
-                      | SL_SI91X_BLE_GATT_ASYNC_ENABLE
-#endif
-                      ),
-                   .ble_ext_feature_bit_map =
-                     ((SL_SI91X_BLE_NUM_CONN_EVENTS(RSI_BLE_NUM_CONN_EVENTS)
-                       | SL_SI91X_BLE_NUM_REC_BYTES(RSI_BLE_NUM_REC_BYTES))
-#if RSI_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                      | SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST //indication response from app
-#endif
-#if RSI_BLE_MTU_EXCHANGE_FROM_HOST
-                      | SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST //MTU Exchange request initiation from app
-#endif
-#if RSI_BLE_SET_SCAN_RESP_DATA_FROM_HOST
-                      | (SL_SI91X_BLE_SET_SCAN_RESP_DATA_FROM_HOST) //Set SCAN Resp Data from app
-#endif
-#if RSI_BLE_DISABLE_CODED_PHY_FROM_HOST
-                      | (SL_SI91X_BLE_DISABLE_CODED_PHY_FROM_HOST) //Disable Coded PHY from app
-#endif
-#if BLE_SIMPLE_GATT
-                      | SL_SI91X_BLE_GATT_INIT
-#endif
-                      ),
-                   .config_feature_bit_map = (SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP) }
-};
 
+//! HTTP resource name
+#define HTTP_URL "dev/upload/write_test.txt"
+
+//! HTTP post data
+#define HTTP_DATA "employee_name=MR.REDDY&employee_id=RSXYZ123&designation=Engineer&company=SILABS&location=Hyderabad"
+
+#if EXTENDED_HEADER_ENABLE
+//! Extended headers
+#define KEY1 "Content-Type"
+#define VAL1 "text/html; charset=utf-8"
+
+#define KEY2 "Content-Encoding"
+#define VAL2 "br"
+
+#define KEY3 "Content-Language"
+#define VAL3 "de-DE"
+
+#define KEY4 "Content-Location"
+#define VAL4 "/index.html"
+#endif
+
+//! Application buffer length
+#define APP_BUFFER_LENGTH 2000
+
+#define HTTP_SUCCESS_RESPONSE 1
+#define HTTP_FAILURE_RESPONSE 2
+
+//! End of data indications
+// No data pending from host
+#define HTTP_END_OF_DATA 1
+
+#define HTTP_SYNC_RESPONSE  0
+#define HTTP_ASYNC_RESPONSE 1
+
+/******************************************************
+ *               Variable Definitions
+ ******************************************************/
 const osThreadAttr_t thread_attributes = {
-  .name       = "common_thread",
+  .name       = "app",
   .attr_bits  = 0,
   .cb_mem     = 0,
   .cb_size    = 0,
   .stack_mem  = 0,
   .stack_size = 3072,
-  .priority   = osPriorityNormal,
+  .priority   = osPriorityLow,
   .tz_module  = 0,
   .reserved   = 0,
 };
 
-const osThreadAttr_t wlan_thread_attributes = {
-  .name       = "wlan_thread",
-  .attr_bits  = 0,
-  .cb_mem     = 0,
-  .cb_size    = 0,
-  .stack_mem  = 0,
-  .stack_size = 2048,
-  .priority   = osPriorityNormal,
-  .tz_module  = 0,
-  .reserved   = 0,
+static const sl_wifi_device_configuration_t http_client_configuration = {
+  .boot_option = LOAD_NWP_FW,
+  .mac_address = NULL,
+  .band        = SL_SI91X_WIFI_BAND_2_4GHZ,
+  .boot_config = { .oper_mode                  = SL_SI91X_CLIENT_MODE,
+                   .coex_mode                  = SL_SI91X_WLAN_ONLY_MODE,
+                   .feature_bit_map            = (SL_SI91X_FEAT_SECURITY_OPEN),
+                   .tcp_ip_feature_bit_map     = (SL_SI91X_TCP_IP_FEAT_DHCPV4_CLIENT | SL_SI91X_TCP_IP_FEAT_HTTP_CLIENT
+                                              | SL_SI91X_TCP_IP_FEAT_DNS_CLIENT | SL_SI91X_TCP_IP_FEAT_SSL),
+                   .custom_feature_bit_map     = SL_SI91X_CUSTOM_FEAT_EXTENTION_VALID,
+                   .ext_custom_feature_bit_map = (SL_SI91X_EXT_FEAT_XTAL_CLK | MEMORY_CONFIG
+#ifdef SLI_SI917
+                                                  | SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+#endif
+                                                  ),
+                   .bt_feature_bit_map      = 0,
+                   .ble_feature_bit_map     = 0,
+                   .ble_ext_feature_bit_map = 0,
+                   .config_feature_bit_map  = 0 }
 };
 
-/*=======================================================================*/
-//   ! EXTERN VARIABLES
-/*=======================================================================*/
+//! Application buffer
+uint8_t app_buffer[APP_BUFFER_LENGTH] = { 0 };
 
-/*=======================================================================*/
-//   ! EXTERN FUNCTIONS
-/*=======================================================================*/
+//! Application buffer index
+uint32_t app_buff_index = 0;
 
-/*=======================================================================*/
-//   ! PROCEDURES
-/*=======================================================================*/
+volatile uint8_t http_rsp_received = 0;
+volatile uint8_t end_of_file       = 0;
+sl_status_t callback_status        = SL_STATUS_OK;
+/******************************************************
+ *               Function Declarations
+ ******************************************************/
+static void application_start(void *argument);
+sl_status_t http_client_application(void);
+sl_status_t http_response_status(volatile uint8_t *response);
+sl_status_t http_put_response_callback_handler(const sl_http_client_t *client,
+                                               sl_http_client_event_t event,
+                                               void *data,
+                                               void *request_context);
+sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
+                                               sl_http_client_event_t event,
+                                               void *data,
+                                               void *request_context);
+sl_status_t http_post_response_callback_handler(const sl_http_client_t *client,
+                                                sl_http_client_event_t event,
+                                                void *data,
+                                                void *request_context);
+static void reset_http_handles(void);
 
-#if ENABLE_POWER_SAVE
-/*==============================================*/
-/**
- * @fn         rsi_initiate_power_save
- * @brief      send power save command to RS9116 module
- *
- * @param[out] none
- * @return     status of commands, success-> 0, failure ->-1
- * @section description
- * This function sends command to keep module in power save
- */
-int32_t rsi_initiate_power_save(void)
+/******************************************************
+ *               Function Definitions
+ ******************************************************/
+
+
+static void application_start(void *argument)
 {
-  int32_t status = RSI_SUCCESS;
+  UNUSED_PARAMETER(argument);
+  sl_status_t status;
 
-  LOG_PRINT("\r\nKeep module into power save\r\n");
-  //! initiating power save in BLE mode
-  status = rsi_bt_power_save_profile(PSP_MODE, PSP_TYPE);
-  if (status != RSI_SUCCESS) {
-    LOG_PRINT("\r\nFailed to initiate power save in BLE mode\r\n");
+  status = sl_net_init(SL_NET_WIFI_CLIENT_INTERFACE, &http_client_configuration, NULL, NULL);
+  if (status != SL_STATUS_OK) {
+    printf("\r\nFailed to start Wi-Fi client interface: 0x%lx\r\n", status);
+    return;
+  }
+  printf("\r\nWi-Fi Init Success\r\n");
+
+  status = sl_net_up(SL_NET_WIFI_CLIENT_INTERFACE, 0);
+  if (status != SL_STATUS_OK) {
+    printf("Failed to bring Wi-Fi client interface up: 0x%lx\r\n", status);
+    return;
+  }
+  printf("\r\nWi-Fi Client Connected\r\n");
+
+#if HTTPS_ENABLE && LOAD_CERTIFICATE
+  // Load SSL CA certificate
+  status = sl_net_set_credential(SL_NET_TLS_SERVER_CREDENTIAL_ID(CERTIFICATE_INDEX),
+                                 SL_NET_SIGNING_CERTIFICATE,
+                                 cacert,
+                                 sizeof(cacert) - 1);
+  if (status != SL_STATUS_OK) {
+    printf("\r\nLoading TLS CA certificate in to FLASH Failed, Error Code : 0x%lX\r\n", status);
+    return;
+  }
+  printf("\r\nLoad TLS CA certificate at index %d Success\r\n", CERTIFICATE_INDEX);
+#endif
+
+  status = http_client_application();
+  if (status != SL_STATUS_OK) {
+    printf("\r\nUnexpected error while HTTP client operation: 0x%lX\r\n", status);
+    return;
+  }
+  printf("\r\nApplication Demonstration Completed Successfully!\r\n");
+}
+
+sl_status_t http_client_application(void)
+{
+  sl_status_t status                                  = SL_STATUS_OK;
+  sl_http_client_t client_handle                      = 0;
+  sl_http_client_configuration_t client_configuration = { 0 };
+  sl_http_client_request_t client_request             = { 0 };
+  int32_t total_put_data_len                          = sizeof(sl_index) - 1;
+  int32_t offset                                      = 0;
+  int32_t chunk_length                                = 0;
+  UNUSED_PARAMETER(total_put_data_len);
+  UNUSED_PARAMETER(offset);
+  UNUSED_PARAMETER(chunk_length);
+
+  //! Set HTTP Client credentials
+  uint16_t username_length = strlen(HTTP_CLIENT_USERNAME);
+  uint16_t password_length = strlen(HTTP_CLIENT_PASSWORD);
+  uint32_t credential_size = sizeof(sl_http_client_credentials_t) + username_length + password_length;
+
+  sl_http_client_credentials_t *client_credentials = (sl_http_client_credentials_t *)malloc(credential_size);
+  SL_VERIFY_POINTER_OR_RETURN(client_credentials, SL_STATUS_ALLOCATION_FAILED);
+  memset(client_credentials, 0, credential_size);
+  client_credentials->username_length = username_length;
+  client_credentials->password_length = password_length;
+
+  memcpy(&client_credentials->data[0], HTTP_CLIENT_USERNAME, username_length);
+  memcpy(&client_credentials->data[username_length], HTTP_CLIENT_PASSWORD, password_length);
+
+  status = sl_net_set_credential(SL_NET_HTTP_CLIENT_CREDENTIAL_ID(0),
+                                 SL_NET_HTTP_CLIENT_CREDENTIAL,
+                                 client_credentials,
+                                 credential_size);
+  if (status != SL_STATUS_OK) {
+    free(client_credentials);
     return status;
   }
 
-  //! initiating power save in wlan mode
-  status = sl_wifi_set_performance_profile(&wifi_profile);
-  if (status != SL_STATUS_OK) {
-    LOG_PRINT("Failed to initiate power save in Wi-Fi mode :%ld\r\n", status);
-    return status;
-  }
-
-  LOG_PRINT("\r\nModule is in power save \r\n");
-  return status;
-}
+  //! Fill HTTP client_configurations
+  client_configuration.network_interface = SL_NET_WIFI_CLIENT_INTERFACE;
+  client_configuration.ip_version        = IP_VERSION;
+  client_configuration.http_version      = HTTP_VERSION;
+#if HTTPS_ENABLE
+  client_configuration.https_enable      = true;
+  client_configuration.tls_version       = TLS_VERSION;
+  client_configuration.certificate_index = CERTIFICATE_INDEX;
 #endif
 
-#if RSI_ENABLE_BLE_TEST
-/*==============================================*/
-/**
- * @fn         rsi_ble_initialize_conn_buffer
- * @brief      this function initializes the configurations for each connection
- * @param[out] none
- * @param[out] none
- * @return     none
- * @section description
- */
-int8_t rsi_ble_initialize_conn_buffer(rsi_ble_conn_config_t *ble_conn_spec_conf)
-{
-  int8_t status = RSI_SUCCESS;
+  //! Fill HTTP client_request configurations
+  client_request.ip_address      = (uint8_t *)HTTP_SERVER_IP;
+  client_request.port            = HTTP_PORT;
+  client_request.resource        = (uint8_t *)HTTP_URL;
+  client_request.extended_header = NULL;
 
-  if (ble_conn_spec_conf != NULL) {
-    if (RSI_BLE_MAX_NBR_PERIPHERALS > 0) {
-      //! Initialize peripheral1 configurations
-      ble_conn_spec_conf[PERIPHERAL1].smp_enable        = SMP_ENABLE_P1;
-      ble_conn_spec_conf[PERIPHERAL1].add_to_acceptlist = ADD_TO_ACCEPTLIST_P1;
-      ble_conn_spec_conf[PERIPHERAL1].profile_discovery = PROFILE_QUERY_P1;
-      ble_conn_spec_conf[PERIPHERAL1].data_transfer     = DATA_TRANSFER_P1;
-      //ble_conn_spec_conf[PERIPHERAL1].bidir_datatransfer = SMP_ENABLE_P1;
-      ble_conn_spec_conf[PERIPHERAL1].rx_notifications                 = RX_NOTIFICATIONS_FROM_P1;
-      ble_conn_spec_conf[PERIPHERAL1].rx_indications                   = RX_INDICATIONS_FROM_P1;
-      ble_conn_spec_conf[PERIPHERAL1].tx_notifications                 = TX_NOTIFICATIONS_TO_P1;
-      ble_conn_spec_conf[PERIPHERAL1].tx_write                         = TX_WRITES_TO_P1;
-      ble_conn_spec_conf[PERIPHERAL1].tx_write_no_response             = TX_WRITES_NO_RESP_TO_P1;
-      ble_conn_spec_conf[PERIPHERAL1].tx_indications                   = TX_INDICATIONS_TO_P1;
-      ble_conn_spec_conf[PERIPHERAL1].conn_param_update.conn_int       = CONN_INTERVAL_P1;
-      ble_conn_spec_conf[PERIPHERAL1].conn_param_update.conn_latncy    = CONN_LATENCY_P1;
-      ble_conn_spec_conf[PERIPHERAL1].conn_param_update.supervision_to = CONN_SUPERVISION_TIMEOUT_P1;
-      ble_conn_spec_conf[PERIPHERAL1].buff_mode_sel.buffer_mode        = DLE_BUFFER_MODE_P1;
-      ble_conn_spec_conf[PERIPHERAL1].buff_mode_sel.buffer_cnt         = DLE_BUFFER_COUNT_P1;
-      ble_conn_spec_conf[PERIPHERAL1].buff_mode_sel.max_data_length    = RSI_BLE_MAX_DATA_LEN_P1;
-    }
+  status = sl_http_client_init(&client_configuration, &client_handle);
+  VERIFY_STATUS_AND_RETURN(status);
+  printf("\r\nHTTP Client init success\r\n");
 
-    if (RSI_BLE_MAX_NBR_PERIPHERALS > 1) {
-      //! Initialize peripheral2 configurations
-      ble_conn_spec_conf[PERIPHERAL2].smp_enable        = SMP_ENABLE_P2;
-      ble_conn_spec_conf[PERIPHERAL2].add_to_acceptlist = ADD_TO_ACCEPTLIST_P2;
-      ble_conn_spec_conf[PERIPHERAL2].profile_discovery = PROFILE_QUERY_P2;
-      ble_conn_spec_conf[PERIPHERAL2].data_transfer     = DATA_TRANSFER_P2;
-      //ble_conn_spec_conf[PERIPHERAL2].bidir_datatransfer = SMP_ENABLE_P2;
-      ble_conn_spec_conf[PERIPHERAL2].rx_notifications                 = RX_NOTIFICATIONS_FROM_P2;
-      ble_conn_spec_conf[PERIPHERAL2].rx_indications                   = RX_INDICATIONS_FROM_P2;
-      ble_conn_spec_conf[PERIPHERAL2].tx_notifications                 = TX_NOTIFICATIONS_TO_P2;
-      ble_conn_spec_conf[PERIPHERAL2].tx_write                         = TX_WRITES_TO_P2;
-      ble_conn_spec_conf[PERIPHERAL2].tx_write_no_response             = TX_WRITES_NO_RESP_TO_P2;
-      ble_conn_spec_conf[PERIPHERAL2].tx_indications                   = TX_INDICATIONS_TO_P2;
-      ble_conn_spec_conf[PERIPHERAL2].conn_param_update.conn_int       = CONN_INTERVAL_P2;
-      ble_conn_spec_conf[PERIPHERAL2].conn_param_update.conn_latncy    = CONN_LATENCY_P2;
-      ble_conn_spec_conf[PERIPHERAL2].conn_param_update.supervision_to = CONN_SUPERVISION_TIMEOUT_P2;
-      ble_conn_spec_conf[PERIPHERAL2].buff_mode_sel.buffer_mode        = DLE_BUFFER_MODE_P2;
-      ble_conn_spec_conf[PERIPHERAL2].buff_mode_sel.buffer_cnt         = DLE_BUFFER_COUNT_P2;
-      ble_conn_spec_conf[PERIPHERAL2].buff_mode_sel.max_data_length    = RSI_BLE_MAX_DATA_LEN_P2;
-    }
+#if 0 //javi
+  //! Configure HTTP PUT request
+  client_request.http_method_type = SL_HTTP_PUT;
+  client_request.body             = NULL;
+  client_request.body_length      = total_put_data_len;
 
-    if (RSI_BLE_MAX_NBR_PERIPHERALS > 2) {
-      //! Initialize PERIPHERAL3 configurations
-      ble_conn_spec_conf[PERIPHERAL3].smp_enable        = SMP_ENABLE_P3;
-      ble_conn_spec_conf[PERIPHERAL3].add_to_acceptlist = ADD_TO_ACCEPTLIST_P3;
-      ble_conn_spec_conf[PERIPHERAL3].profile_discovery = PROFILE_QUERY_P3;
-      ble_conn_spec_conf[PERIPHERAL3].data_transfer     = DATA_TRANSFER_P3;
-      //ble_conn_spec_conf[PERIPHERAL3].bidir_datatransfer = SMP_ENABLE_P3;
-      ble_conn_spec_conf[PERIPHERAL3].rx_notifications                 = RX_NOTIFICATIONS_FROM_P3;
-      ble_conn_spec_conf[PERIPHERAL3].rx_indications                   = RX_INDICATIONS_FROM_P3;
-      ble_conn_spec_conf[PERIPHERAL3].tx_notifications                 = TX_NOTIFICATIONS_TO_P3;
-      ble_conn_spec_conf[PERIPHERAL3].tx_write                         = TX_WRITES_TO_P3;
-      ble_conn_spec_conf[PERIPHERAL3].tx_write_no_response             = TX_WRITES_NO_RESP_TO_P3;
-      ble_conn_spec_conf[PERIPHERAL3].tx_indications                   = TX_INDICATIONS_TO_P3;
-      ble_conn_spec_conf[PERIPHERAL3].conn_param_update.conn_int       = CONN_INTERVAL_P3;
-      ble_conn_spec_conf[PERIPHERAL3].conn_param_update.conn_latncy    = CONN_LATENCY_P3;
-      ble_conn_spec_conf[PERIPHERAL3].conn_param_update.supervision_to = CONN_SUPERVISION_TIMEOUT_P3;
-      ble_conn_spec_conf[PERIPHERAL3].buff_mode_sel.buffer_mode        = DLE_BUFFER_MODE_P3;
-      ble_conn_spec_conf[PERIPHERAL3].buff_mode_sel.buffer_cnt         = DLE_BUFFER_COUNT_P3;
-      ble_conn_spec_conf[PERIPHERAL3].buff_mode_sel.max_data_length    = RSI_BLE_MAX_DATA_LEN_P3;
-    }
+  //! Initialize callback method for HTTP PUT request
+  status = sl_http_client_request_init(&client_request, http_put_response_callback_handler, "This is HTTP client");
+  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
+  printf("\r\nHTTP PUT request init success\r\n");
 
-    if (RSI_BLE_MAX_NBR_CENTRALS > 0) {
-      //! Initialize central1 configurations
-      ble_conn_spec_conf[CENTRAL1].smp_enable        = SMP_ENABLE_C1;
-      ble_conn_spec_conf[CENTRAL1].add_to_acceptlist = ADD_TO_ACCEPTLIST_C1;
-      ble_conn_spec_conf[CENTRAL1].profile_discovery = PROFILE_QUERY_C1;
-      ble_conn_spec_conf[CENTRAL1].data_transfer     = DATA_TRANSFER_C1;
-      //ble_conn_spec_conf[CENTRAL1].bidir_datatransfer = SMP_ENABLE_C1;
-      ble_conn_spec_conf[CENTRAL1].rx_notifications                 = RX_NOTIFICATIONS_FROM_C1;
-      ble_conn_spec_conf[CENTRAL1].rx_indications                   = RX_INDICATIONS_FROM_C1;
-      ble_conn_spec_conf[CENTRAL1].tx_notifications                 = TX_NOTIFICATIONS_TO_C1;
-      ble_conn_spec_conf[CENTRAL1].tx_write                         = TX_WRITES_TO_C1;
-      ble_conn_spec_conf[CENTRAL1].tx_write_no_response             = TX_WRITES_NO_RESP_TO_C1;
-      ble_conn_spec_conf[CENTRAL1].tx_indications                   = TX_INDICATIONS_TO_C1;
-      ble_conn_spec_conf[CENTRAL1].conn_param_update.conn_int       = CONN_INTERVAL_C1;
-      ble_conn_spec_conf[CENTRAL1].conn_param_update.conn_latncy    = CONN_LATENCY_C1;
-      ble_conn_spec_conf[CENTRAL1].conn_param_update.supervision_to = CONN_SUPERVISION_TIMEOUT_C1;
-      ble_conn_spec_conf[CENTRAL1].buff_mode_sel.buffer_mode        = DLE_BUFFER_MODE_C1;
-      ble_conn_spec_conf[CENTRAL1].buff_mode_sel.buffer_cnt         = DLE_BUFFER_COUNT_C1;
-      ble_conn_spec_conf[CENTRAL1].buff_mode_sel.max_data_length    = RSI_BLE_MAX_DATA_LEN_C1;
-    }
+#if EXTENDED_HEADER_ENABLE
+  //! Add extended headers
+  status = sl_http_client_add_header(&client_request, KEY1, VAL1);
+  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
 
-    if (RSI_BLE_MAX_NBR_CENTRALS > 1) {
-      //! Initialize central2 configurations
-      ble_conn_spec_conf[CENTRAL2].smp_enable        = SMP_ENABLE_C2;
-      ble_conn_spec_conf[CENTRAL2].add_to_acceptlist = ADD_TO_ACCEPTLIST_C2;
-      ble_conn_spec_conf[CENTRAL2].profile_discovery = PROFILE_QUERY_C2;
-      ble_conn_spec_conf[CENTRAL2].data_transfer     = DATA_TRANSFER_C2;
-      //ble_conn_spec_conf[CENTRAL2].bidir_datatransfer = SMP_ENABLE_C2;
-      ble_conn_spec_conf[CENTRAL2].rx_notifications                 = RX_NOTIFICATIONS_FROM_C2;
-      ble_conn_spec_conf[CENTRAL2].rx_indications                   = RX_INDICATIONS_FROM_C2;
-      ble_conn_spec_conf[CENTRAL2].tx_notifications                 = TX_NOTIFICATIONS_TO_C2;
-      ble_conn_spec_conf[CENTRAL2].tx_write                         = TX_WRITES_TO_C2;
-      ble_conn_spec_conf[CENTRAL2].tx_write_no_response             = TX_WRITES_NO_RESP_TO_C2;
-      ble_conn_spec_conf[CENTRAL2].tx_indications                   = TX_INDICATIONS_TO_C2;
-      ble_conn_spec_conf[CENTRAL2].conn_param_update.conn_int       = CONN_INTERVAL_C2;
-      ble_conn_spec_conf[CENTRAL2].conn_param_update.conn_latncy    = CONN_LATENCY_C2;
-      ble_conn_spec_conf[CENTRAL2].conn_param_update.supervision_to = CONN_SUPERVISION_TIMEOUT_C2;
-      ble_conn_spec_conf[CENTRAL2].buff_mode_sel.buffer_mode        = DLE_BUFFER_MODE_C2;
-      ble_conn_spec_conf[CENTRAL2].buff_mode_sel.buffer_cnt         = DLE_BUFFER_COUNT_C2;
-      ble_conn_spec_conf[CENTRAL2].buff_mode_sel.max_data_length    = RSI_BLE_MAX_DATA_LEN_C2;
-    }
+  status = sl_http_client_add_header(&client_request, KEY2, VAL2);
+  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
+
+  status = sl_http_client_add_header(&client_request, KEY3, VAL3);
+  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
+
+  status = sl_http_client_add_header(&client_request, KEY4, VAL4);
+  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
+#endif
+
+  //! Send HTTP PUT request
+  status = sl_http_client_send_request(&client_handle, &client_request);
+  if (status == SL_STATUS_IN_PROGRESS) {
+    status = http_response_status(&http_rsp_received);
+    CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_ASYNC_RESPONSE);
   } else {
-    LOG_PRINT("\r\n Invalid buffer passed \r\n");
-    status = RSI_FAILURE;
-  }
-  return status;
-}
-
-/*==============================================*/
-/**
- * @fn         rsi_fill_user_config
- * @brief      this function fills the compile time user inputs to local buffer
- * @param[out] none
- * @return     none.
- * @section description
- * this function fills the compile time userinputs to local buffer
- */
-int8_t rsi_fill_user_config()
-{
-  int8_t status = RSI_SUCCESS;
-  //! copy protocol selection macros
-  status = rsi_ble_initialize_conn_buffer((rsi_ble_conn_config_t *)&rsi_parsed_conf.rsi_ble_config.rsi_ble_conn_config);
-  return status;
-}
-#endif
-
-/*==============================================*/
-/**
- * @fn         rsi_common_app_task
- * @brief      This function creates the main tasks for selected protocol
- * @param[out] none
- * @return     none.
- * @section description
- * This function creates the main tasks for enabled protocols based on local buffer 'rsi_parsed_conf'
- */
-void rsi_common_app_task(void)
-{
-  uint32_t status                    = RSI_SUCCESS;
-  wlan_app_thread_id                 = NULL;
-  sl_wifi_firmware_version_t version = { 0 };
-
-  //! WiSeConnect initialization
-  status = sl_wifi_init(&config, NULL, sl_wifi_default_event_handler);
-  if (status != SL_STATUS_OK) {
-    LOG_PRINT("\r\nWi-Fi Initialization Failed, Error Code : 0x%lX\r\n", status);
-    return;
-  }
-  LOG_PRINT("\r\nWi-Fi initialization is successful\n");
-
-  //! Firmware version Prints
-  status = sl_wifi_get_firmware_version(&version);
-  if (status != SL_STATUS_OK) {
-    LOG_PRINT("\r\nFirmware version Failed, Error Code : 0x%lX\r\n", status);
-  } else {
-    print_firmware_version(&version);
+    CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
   }
 
-#if SSL && LOAD_CERTIFICATE
-  clear_and_load_certificates_in_flash();
-#endif
+  //! Write HTTP PUT data
+  while (!end_of_file) {
+    //! Get the current length that you want to send
+    chunk_length = ((total_put_data_len - offset) > SL_HTTP_CLIENT_MAX_WRITE_BUFFER_LENGTH)
+                     ? SL_HTTP_CLIENT_MAX_WRITE_BUFFER_LENGTH
+                     : (total_put_data_len - offset);
 
-#if ENABLE_POWER_SAVE
-  powersave_cmd_given = false;
+    status = sl_http_client_write_chunked_data(&client_handle, (uint8_t *)(sl_index + offset), chunk_length, 0);
 
-  //! create mutex
-  power_cmd_mutex = osMutexNew(NULL);
-  if (power_cmd_mutex == NULL) {
-    LOG_PRINT("\nFailed to create mutex object\r\n");
-    return;
-  }
-#endif
+    if (status == SL_STATUS_IN_PROGRESS) {
+      status = http_response_status(&http_rsp_received);
+      CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_ASYNC_RESPONSE);
 
-#if RSI_ENABLE_WLAN_TEST
-  rsi_wlan_running = false;
-
-#if WLAN_SYNC_REQ
-  sync_coex_ble_sem = osSemaphoreNew(1, 0, NULL); //! This lock will be used from wlan task to be done.
-  if (sync_coex_ble_sem == NULL) {
-    LOG_PRINT("\r\nFailed to create sync_coex_ble_sem\r\n");
-    return;
-  }
-#endif
-
-  rsi_wlan_running = true; //! Making sure Wi-Fi got triggered.
-#if RSI_ENABLE_BLE_TEST
-  // Invoke new thread for Wi-Fi
-  wlan_app_thread_id = osThreadNew((osThreadFunc_t)rsi_wlan_app_thread, NULL, &wlan_thread_attributes);
-  if (wlan_app_thread_id == NULL) {
-    LOG_PRINT("\r\rsi_wlan_app_thread failed to create\r\n");
-    return;
-  }
-#else
-  rsi_wlan_app_thread(NULL);
-#endif
-#endif
-
-#if RSI_ENABLE_BLE_TEST
-  //! fill the configurations in local structure based on compilation macros
-  status = rsi_fill_user_config();
-  if (status != RSI_SUCCESS) {
-    LOG_PRINT("\r\nFailed to fill the configurations in local buffer\r\n");
-    return;
-  }
-
-  //! create ble main task if ble protocol is selected
-  ble_main_task_sem = osSemaphoreNew(1, 0, NULL);
-  if (ble_main_task_sem == NULL) {
-    LOG_PRINT("\r\nFailed to create ble_main_task_sem\r\n");
-    return;
-  }
-
-  if (RSI_BLE_MAX_NBR_PERIPHERALS > 0) {
-    ble_peripheral_conn_sem = osSemaphoreNew(1, 0, NULL);
-    if (ble_peripheral_conn_sem == NULL) {
-      LOG_PRINT("\r\nFailed to create ble_peripheral_conn_sem\r\n");
-      return;
+      offset += chunk_length;
+    } else {
+      CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
     }
   }
 
-#if RSI_ENABLE_WLAN_TEST && WLAN_THROUGHPUT_TEST
-  ble_wlan_throughput_sync_sem = osSemaphoreNew(1, 0, NULL);
-  if (ble_wlan_throughput_sync_sem == NULL) {
-    LOG_PRINT("\r\nFailed to create ble_wlan_throughput_sync_sem\r\n");
-    return;
+  printf("\r\nHTTP PUT request Success!\r\n");
+  reset_http_handles();
+#endif // javier
+
+  //! Configure HTTP GET request
+  client_request.http_method_type = SL_HTTP_GET;
+
+  //! Initialize callback method for HTTP GET request
+  status = sl_http_client_request_init(&client_request, http_get_response_callback_handler, "This is HTTP client");
+  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
+  printf("\r\nHTTP Get request init success\r\n");
+
+  //! Send HTTP GET request
+  status = sl_http_client_send_request(&client_handle, &client_request);
+  uint32_t start_time = osKernelGetTickCount();
+  printf("\r\nHTTP Get request status=%lx\r\n", status); //javi
+  if (status == SL_STATUS_IN_PROGRESS) {
+    printf("\r\n SL_STATUS_IN_PROGRESS\r\n"); //javi
+    status = http_response_status(&http_rsp_received);
+    printf("\r\n status=%lx\r\n",status); //javi
+    CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_ASYNC_RESPONSE);
+  } else {
+    CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
   }
+
+  //SL_DEBUG_LOG("\r\nGET Data response:\n%s \nOffset: %ld\r\n", app_buffer, app_buff_index);
+  printf("\r\nReceived data length: %ld\r\n", app_buff_index); //javi
+  uint32_t duration   = osKernelGetTickCount() - start_time;
+  printf("Total time: (%lu ms)\r\n",duration);
+
+  printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
+
+  printf("\r\nHTTP GET request Success\r\n");
+  reset_http_handles();
+
+#if 0 //javi
+  //! Configure HTTP POST request
+  client_request.http_method_type = SL_HTTP_POST;
+  client_request.body             = (uint8_t *)HTTP_DATA;
+  client_request.body_length      = strlen(HTTP_DATA);
+
+  //! Initialize callback method for HTTP POST request
+  status = sl_http_client_request_init(&client_request, http_post_response_callback_handler, "This is HTTP client");
+  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
+  printf("\r\nHTTP Post request init success\r\n");
+
+  //! Send HTTP POST request
+  status = sl_http_client_send_request(&client_handle, &client_request);
+  if (status == SL_STATUS_IN_PROGRESS) {
+    status = http_response_status(&http_rsp_received);
+    CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_ASYNC_RESPONSE);
+  } else {
+    CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
+  }
+
+  printf("\r\nHTTP POST request Success\r\n");
+  reset_http_handles();
+#endif //javi
+
+#if EXTENDED_HEADER_ENABLE
+  status = sl_http_client_delete_all_headers(&client_request);
+  CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
 #endif
-  rsi_ble_running = true;
-  rsi_ble_main_app_task();
-#endif
+
+  status = sl_http_client_deinit(&client_handle);
+  VERIFY_STATUS_AND_RETURN(status);
+  printf("\r\nHTTP Client deinit success\r\n");
+  free(client_credentials);
+
+  return status;
 }
 
-void app_init(void)
+sl_status_t http_put_response_callback_handler(const sl_http_client_t *client,
+                                               sl_http_client_event_t event,
+                                               void *data,
+                                               void *request_context)
 {
-  //common_app_thread_id = osThreadNew((osThreadFunc_t)rsi_common_app_task, NULL, &thread_attributes);
-  //if (common_app_thread_id == NULL) {
-  //  LOG_PRINT("\r\rsi_common_app_task failed to create\r\n");
-  //  return;
-  //}
+  UNUSED_PARAMETER(client);
+  UNUSED_PARAMETER(event);
 
+  sl_http_client_response_t *put_response = (sl_http_client_response_t *)data;
+  callback_status                         = put_response->status;
 
-  extern void fatfs_sdcard_init();
-  fatfs_sdcard_init();
+  SL_DEBUG_LOG("\r\n===========HTTP PUT RESPONSE START===========\r\n");
+  SL_DEBUG_LOG(
+    "\r\n> Status: 0x%X\n> PUT response: %u\n> End of data: %lu\n> Data Length: %u\n> Request Context: %s\r\n",
+    put_response->status,
+    put_response->http_response_code,
+    put_response->end_of_data,
+    put_response->data_length,
+    (char *)request_context);
+
+  if (put_response->status != SL_STATUS_OK) {
+    http_rsp_received = 2;
+    return put_response->status;
+  }
+
+  if (put_response->end_of_data & HTTP_END_OF_DATA) {
+    if (put_response->data_length) {
+        printf(";");
+      memcpy(app_buffer + app_buff_index, put_response->data_buffer, put_response->data_length);
+      app_buff_index += put_response->data_length;
+    }
+    http_rsp_received = HTTP_SUCCESS_RESPONSE;
+    end_of_file       = HTTP_SUCCESS_RESPONSE;
+  } else {
+      printf(":");
+    memcpy(app_buffer + app_buff_index, put_response->data_buffer, put_response->data_length);
+    app_buff_index += put_response->data_length;
+    http_rsp_received = HTTP_SUCCESS_RESPONSE;
+  }
+
+  return SL_STATUS_OK;
+}
+
+sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
+                                               sl_http_client_event_t event,
+                                               void *data,
+                                               void *request_context)
+{
+  UNUSED_PARAMETER(client);
+  UNUSED_PARAMETER(event);
+
+  sl_http_client_response_t *get_response = (sl_http_client_response_t *)data;
+  callback_status                         = get_response->status;
+
+  SL_DEBUG_LOG("\r\n===========HTTP GET RESPONSE START===========\r\n");
+  SL_DEBUG_LOG(
+    "\r\n> Status: 0x%X\n> GET response: %u\n> End of data: %lu\n> Data Length: %u\n> Request Context: %s\r\n",
+    get_response->status,
+    get_response->http_response_code,
+    get_response->end_of_data,
+    get_response->data_length,
+    (char *)request_context);
+
+  if (get_response->status != SL_STATUS_OK
+      || (get_response->http_response_code >= 400 && get_response->http_response_code <= 599
+          && get_response->http_response_code != 0)) {
+    http_rsp_received = HTTP_FAILURE_RESPONSE;
+    return get_response->status;
+  }
+
+  if (!get_response->end_of_data) {
+    //memcpy(app_buffer + app_buff_index, get_response->data_buffer, get_response->data_length);
+      //printf("(%u)",get_response->data_length);
+      memcpy(app_buffer, get_response->data_buffer, get_response->data_length);  //javi
+    app_buff_index += get_response->data_length;
+  } else {
+    if (get_response->data_length) {
+      //memcpy(app_buffer + app_buff_index, get_response->data_buffer, get_response->data_length);
+        //printf("(%u)",get_response->data_length);
+        memcpy(app_buffer, get_response->data_buffer, get_response->data_length);  //javi
+      app_buff_index += get_response->data_length;
+    }
+    http_rsp_received = HTTP_SUCCESS_RESPONSE;
+  }
+
+  return SL_STATUS_OK;
+}
+
+sl_status_t http_post_response_callback_handler(const sl_http_client_t *client,
+                                                sl_http_client_event_t event,
+                                                void *data,
+                                                void *request_context)
+{
+  UNUSED_PARAMETER(client);
+  UNUSED_PARAMETER(event);
+
+  sl_http_client_response_t *post_response = (sl_http_client_response_t *)data;
+  callback_status                          = post_response->status;
+
+  SL_DEBUG_LOG("\r\n===========HTTP POST RESPONSE START===========\r\n");
+  SL_DEBUG_LOG(
+    "\r\n> Status: 0x%X\n> POST response: %u\n> End of data: %lu\n> Data Length: %u\n> Request Context: %s\r\n",
+    post_response->status,
+    post_response->http_response_code,
+    post_response->end_of_data,
+    post_response->data_length,
+    (char *)request_context);
+
+  if (post_response->status != SL_STATUS_OK
+      || (post_response->http_response_code >= 400 && post_response->http_response_code <= 599
+          && post_response->http_response_code != 0)) {
+    http_rsp_received = HTTP_FAILURE_RESPONSE;
+    return post_response->status;
+  }
+
+  if (post_response->end_of_data) {
+    http_rsp_received = 1;
+  }
+
+  return SL_STATUS_OK;
+}
+
+sl_status_t http_response_status(volatile uint8_t *response)
+{
+  while (!(*response)) {
+    /* Wait till response arrives */
+  }
+
+  if (*response != HTTP_SUCCESS_RESPONSE) {
+    return SL_STATUS_FAIL;
+  }
+
+  // Reset response
+  *response = 0;
+
+  return SL_STATUS_OK;
+}
+
+static void reset_http_handles(void)
+{
+  app_buff_index = 0;
+  end_of_file    = 0;
+}
+
+void app_init(const void *unused)
+{
+  UNUSED_PARAMETER(unused);
+  osThreadNew((osThreadFunc_t)application_start, NULL, &thread_attributes);
+
+  //extern void fatfs_sdcard_init();
+  //fatfs_sdcard_init();
 }

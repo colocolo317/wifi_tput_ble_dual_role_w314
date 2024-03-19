@@ -199,7 +199,7 @@ void StartSDinfo(void const *argument)
         dmesg(fres);
       }
       f_mount(NULL, "", 0);
-      printf("\n[SDinfo]: Unmount SDCard");
+      printf("\n[SDinfo]: Unmount SDCard\r\n");
       osMutexRelease(SDCardMutexHandle);
       osDelay(portMAX_DELAY);
   }
