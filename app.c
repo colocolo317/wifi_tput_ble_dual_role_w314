@@ -565,8 +565,12 @@ static void reset_http_handles(void)
 void app_init(const void *unused)
 {
   UNUSED_PARAMETER(unused);
+#if 0
   osThreadNew((osThreadFunc_t)application_start, NULL, &thread_attributes);
+#else
+  UNUSED_PARAMETER(application_start);
+#endif
 
-  //extern void fatfs_sdcard_init();
-  //fatfs_sdcard_init();
+  extern void fatfs_sdcard_init();
+  fatfs_sdcard_init();
 }

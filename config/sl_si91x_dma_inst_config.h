@@ -38,7 +38,7 @@ extern "C" {
 
 // <o SL_DMA_INSTANCE> DMA instance <0-1>
 // <i> Default: 0
-#define SL_DMA_INSTANCE 1
+#define SL_DMA_INSTANCE 0
 
 // <o SL_DMA_CHANNEL> DMA channel <1-32>
 // <i> Default: 32
