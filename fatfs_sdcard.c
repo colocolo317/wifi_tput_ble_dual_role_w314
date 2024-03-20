@@ -246,59 +246,58 @@ void StartSDManager(void const *argument) {
         ls("");
 
 #if 0
-      // Create Folder
-      fres = f_mkdir("DEMO");
-      if (fres == FR_OK) {
-          printf("\n[SDManager]: Create Folder");
-      } else {
-          printf("\n[SDManager][Create_Folder]: ");
-        dmesg(fres);
-      }
+        // Create Folder
+        fres = f_mkdir("DEMO");
+        if (fres == FR_OK) {
+            printf("\n[SDManager]: Create Folder");
+        } else {
+            printf("\n[SDManager][Create_Folder]: ");
+          dmesg(fres);
+        }
 #endif
 
 
-#if 1
-      // Read File
-      fres = f_open(&fil, "WRITE.TXT", FA_OPEN_ALWAYS |FA_READ );
-      if (fres == FR_OK)
-      {
-        //int res = f_gets((TCHAR*)readBuf, 30, &fil);
-          uint32_t start_time = osKernelGetTickCount();
-          uint32_t total_byteread = 0;
-          int res;
+#if 0
+        // Read File
+        fres = f_open(&fil, "WRITE.TXT", FA_OPEN_ALWAYS |FA_READ );
+        if (fres == FR_OK)
+        {
+          //int res = f_gets((TCHAR*)readBuf, 30, &fil);
+            uint32_t start_time = osKernelGetTickCount();
+            uint32_t total_byteread = 0;
+            int res;
 
-          do{
-              res = f_read(&fil, readBuf, MAX_READ_BUF_LEN, &read);
-              if (res == FR_OK) {
-                  //printf("\n[SDManager]: Read File res:%d recvLen:%d \r\n", res, read);
-                  //printf("\n[SDManager]: 'test.txt' contents: %s\r\n", readBuf);
-                  total_byteread += read;
-              }
-              else
-              {
-                  printf("\n[SDManager] Read File failure:%d", fres);
-                  dmesg(res);
-              }
-          }while(!f_eof(&fil));
+            do{
+                res = f_read(&fil, readBuf, MAX_READ_BUF_LEN, &read);
+                if (res == FR_OK) {
+                    //printf("\n[SDManager]: Read File res:%d recvLen:%d \r\n", res, read);
+                    //printf("\n[SDManager]: 'test.txt' contents: %s\r\n", readBuf);
+                    total_byteread += read;
+                }
+                else
+                {
+                    printf("\n[SDManager] Read File failure:%d", fres);
+                    dmesg(res);
+                }
+            }while(!f_eof(&fil));
 
-          uint32_t duration   = osKernelGetTickCount() - start_time;
+            uint32_t duration   = osKernelGetTickCount() - start_time;
 
 
-        printf("\r\n Read File Duration: (%lums), total read: %lu byte\r\n", duration, total_byteread);
-      }
-      else
-      {
-        printf("\n[SDManager][Read_File]: ");
-        dmesg(fres);
-      }
-      f_close(&fil);
-      osDelay(100);
+          printf("\r\n Read File Duration: (%lums), total read: %lu byte\r\n", duration, total_byteread);
+        }
+        else
+        {
+          printf("\n[SDManager][Read_File]: ");
+          dmesg(fres);
+        }
+        f_close(&fil);
+        osDelay(100);
 #endif
 
-#if 1
+#if 0
       // Write File
-      fres = f_open(&fil, "write.txt",
-      FA_WRITE | FA_OPEN_ALWAYS );
+      fres = f_open(&fil, "write3.txt", FA_WRITE | FA_OPEN_ALWAYS );
       if (fres == FR_OK) {
         //Copy in a string
         //strncpy((char*) writeBuf, "I hate Java!", 13);
@@ -308,7 +307,7 @@ void StartSDManager(void const *argument) {
         uint32_t duration   = osKernelGetTickCount() - start_time;
         if (fres == FR_OK) {
             printf("\n[SDManager]: Write File");
-            printf("\n[SDManager]: Wrote %i bytes to 'write.txt'!\r\n",
+            printf("\n[SDManager]: Wrote %i bytes to 'write3.txt'!\r\n",
               bytesWrote);
 
         } else {
@@ -320,7 +319,9 @@ void StartSDManager(void const *argument) {
           printf("\n[SDManager][Create_File]: ");
         dmesg(fres);
       }
-      f_close(&fil);
+
+      fres=f_close(&fil);
+      if (fres != FR_OK) {dmesg(fres);};
 #endif
 
     } else {
@@ -328,8 +329,11 @@ void StartSDManager(void const *argument) {
       dmesg(fres);
     }
 
-    f_mount(NULL, "", 0);
+    fres=f_mount(NULL, "", 0);
+    if (fres != FR_OK) {dmesg(fres);};
     printf("\n[SDManager]: Unmount SDCard");
+
+
     osMutexRelease(SDCardMutexHandle);
     osDelay(portMAX_DELAY);
   }

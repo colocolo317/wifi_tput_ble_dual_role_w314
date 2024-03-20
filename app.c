@@ -139,8 +139,8 @@ const osThreadAttr_t thread_attributes = {
   .cb_mem     = 0,
   .cb_size    = 0,
   .stack_mem  = 0,
-  .stack_size = 3072,
-  .priority   = osPriorityLow,
+  .stack_size = 8000,
+  .priority   = osPriorityNormal,
   .tz_module  = 0,
   .reserved   = 0,
 };
@@ -176,6 +176,8 @@ volatile uint8_t http_rsp_received = 0;
 volatile uint8_t end_of_file       = 0;
 sl_status_t callback_status        = SL_STATUS_OK;
 //FIL* pfile;
+
+static uint32_t start_time;
 /******************************************************
  *               Function Declarations
  ******************************************************/
@@ -308,10 +310,11 @@ sl_status_t http_client_application(void)
   CLEAN_HTTP_CLIENT_IF_FAILED(status, &client_handle, HTTP_SYNC_RESPONSE);
   printf("\r\nHTTP Get request init success\r\n");
 
+  printf("\r\n==Start measure time==\r\n");
+  start_time = osKernelGetTickCount();
   //! Send HTTP GET request
   status = sl_http_client_send_request(&client_handle, &client_request);
-  uint32_t start_time = osKernelGetTickCount();
-  printf("\r\n==Start measure time==\r\n");
+
   printf("\r\nHTTP Get request status=%lx\r\n", status); //javi
   if (status == SL_STATUS_IN_PROGRESS) {
     printf("\r\n SL_STATUS_IN_PROGRESS\r\n"); //javi
@@ -420,6 +423,9 @@ sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
   UNUSED_PARAMETER(client);
   UNUSED_PARAMETER(event);
 
+  static uint32_t section_time;
+  static uint32_t last_time;
+
   sl_http_client_response_t *get_response = (sl_http_client_response_t *)data;
   callback_status                         = get_response->status;
 
@@ -443,8 +449,24 @@ sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
     //memcpy(app_buffer + app_buff_index, get_response->data_buffer, get_response->data_length);
       //printf("(%u)",get_response->data_length);
       //memcpy(app_buffer, get_response->data_buffer, get_response->data_length);  //javi
-      FRESULT fres = sdcard_write(get_response->data_buffer, get_response->data_length);
-      if(fres != FR_OK){dmesg(fres);}
+      //TODO: count tick
+
+#if 0
+      section_time = osKernelGetTickCount();
+      printf("get new packet: %lu ms\r\n",section_time-last_time);
+#endif
+#if 0
+      osDelay(30); //can't use any block call inside here
+      FRESULT fres = FR_OK;
+#else
+      FRESULT fres= sdcard_write(get_response->data_buffer, get_response->data_length);
+#endif
+#if 0
+      last_time = osKernelGetTickCount();
+      printf("wrote packet done: %lu ms, %u bytes\r\n",last_time-section_time, get_response->data_length);
+#endif
+      if(fres != FR_OK)
+        { dmesg(fres); }
       app_buff_index += get_response->data_length;
 
   } else {
@@ -452,8 +474,14 @@ sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
       //memcpy(app_buffer + app_buff_index, get_response->data_buffer, get_response->data_length);
         //printf("(%u)",get_response->data_length);
         //memcpy(app_buffer, get_response->data_buffer, get_response->data_length);  //javi
+
+        section_time = osKernelGetTickCount();
+        printf("get final packet: %lu ms\r\n",section_time-last_time);
         FRESULT fres = sdcard_write(get_response->data_buffer, get_response->data_length);
-        if(fres != FR_OK){dmesg(fres);}
+        last_time = osKernelGetTickCount();
+        printf("wrote packet done: %lu ms, %u bytes\r\n",last_time-section_time, get_response->data_length);
+        if(fres != FR_OK)
+          { dmesg(fres); }
       app_buff_index += get_response->data_length;
       sdcard_ends();
     }
@@ -499,7 +527,9 @@ sl_status_t http_post_response_callback_handler(const sl_http_client_t *client,
 
 sl_status_t http_response_status(volatile uint8_t *response)
 {
+  //printf("response: %u ",*response);
   while (!(*response)) {
+      //printf("w");
     /* Wait till response arrives */
   }
 

@@ -991,11 +991,6 @@
 			<locationURI>STUDIO_SDK_LOC/extension/wiseconnect/components/device/silabs/si91x/wireless/host_mcu/si91x/siwx917_soc_ncp_host.c</locationURI>
 		</link>
 		<link>
-			<name>wiseconnect3_sdk_3.1.3/components/device/silabs/si91x/wireless/sl_net/inc/sl_net_rsi_utility.h</name>
-			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/extension/wiseconnect/components/device/silabs/si91x/wireless/sl_net/inc/sl_net_rsi_utility.h</locationURI>
-		</link>
-		<link>
 			<name>wiseconnect3_sdk_3.1.3/components/device/silabs/si91x/wireless/sl_net/inc/sl_net_si91x.h</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/extension/wiseconnect/components/device/silabs/si91x/wireless/sl_net/inc/sl_net_si91x.h</locationURI>

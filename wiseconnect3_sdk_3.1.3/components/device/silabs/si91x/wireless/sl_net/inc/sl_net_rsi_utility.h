@@ -1,9 +1,9 @@
 /***************************************************************************/ /**
  * @file
- * @brief SL USART Config.
+ * @brief
  *******************************************************************************
  * # License
- * <b>Copyright 2023 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2019 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -27,29 +27,24 @@
  * 3. This notice may not be removed or altered from any source distribution.
  *
  ******************************************************************************/
+#pragma once
 
-#ifndef SL_DMA_CONFIG_H
-#define SL_DMA_CONFIG_H
-
-// <<< Use Configuration Wizard in Context Menu >>>
-#ifdef __cplusplus
-extern "C" {
+#include <stdint.h>
+#include <string.h>
+#include <stdbool.h>
+#include "sl_status.h"
+#include "sl_si91x_host_interface.h"
+#include "sl_si91x_protocol_types.h"
+#include "sl_net_constants.h"
+#ifdef SLI_SI91X_INTERNAL_HTTP_CLIENT
+#include "sl_http_client.h"
 #endif
 
-// <o SL_DMA_INSTANCE> DMA instance <0-1>
-// <i> Default: 0
-#define SL_DMA_INSTANCE 0
-
-// <o SL_DMA_CHANNEL> DMA channel <1-32>
-// <i> Default: 32
-#define SL_DMA_CHANNEL 32
-
-// <o SL_DMA_TRANSFER_SIZE> DMA transfer size in bytes <1-10000>
-// <i> Default: 10000
-#define SL_DMA_TRANSFER_SIZE 2048
-
-#ifdef __cplusplus
-}
+sl_status_t convert_rsi_ipv4_address_to_sl_ip_address(sl_ip_address_t *ip_address_buffer,
+                                                      sl_si91x_rsp_ipv4_params_t *ip_params);
+sl_status_t convert_si91x_dns_response(sl_ip_address_t *ip_address, sl_si91x_dns_response_t *si91x_dns_response);
+sl_status_t convert_si91x_event_to_sl_net_event(uint16_t *event, sl_net_event_t *sl_net_event);
+#ifdef SLI_SI91X_INTERNAL_HTTP_CLIENT
+void convert_itoa(uint32_t val, uint8_t *str);
+sl_status_t convert_si91x_event_to_sl_http_client_event(uint16_t *event, sl_http_client_event_t *sl_http_client_event);
 #endif
-// <<< end of configuration section >>>
-#endif //SL_DMA_CONFIG_H

@@ -45,7 +45,6 @@
 								<option id="gnu.c.compiler.option.warnings.toerrors.786063447" name="Warnings as errors (-Werror)" superClass="gnu.c.compiler.option.warnings.toerrors" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.warnings.pedantic.1586299955" name="Pedantic (-pedantic)" superClass="gnu.c.compiler.option.warnings.pedantic" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.silabs.gnu.c.compiler.option.misc.otherlist.1068481391" name="Other flags" superClass="com.silabs.gnu.c.compiler.option.misc.otherlist" useByScannerDiscovery="false" valueType="stringList">
-									<listOptionValue builtIn="false" value="-Wall -Werror"/>
 									<listOptionValue builtIn="false" value="--specs=nano.specs"/>
 									<listOptionValue builtIn="false" value="-c"/>
 									<listOptionValue builtIn="false" value="-fmessage-length=0"/>
