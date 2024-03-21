@@ -242,6 +242,7 @@ static void application_start(void *argument)
     printf("\r\nUnexpected error while HTTP client operation: 0x%lX\r\n", status);
     return;
   }
+  sdcard_ends();
   printf("\r\nApplication Demonstration Completed Successfully!\r\n");
 }
 
@@ -483,7 +484,7 @@ sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
         if(fres != FR_OK)
           { dmesg(fres); }
       app_buff_index += get_response->data_length;
-      sdcard_ends();
+
     }
     http_rsp_received = HTTP_SUCCESS_RESPONSE;
   }

@@ -397,8 +397,16 @@ void fatfs_sdcard_init(void)
 
 }
 void sdcard_ends(){
-  f_close(&fil);
-  f_mount(NULL, "", 0);
-  printf("\n[SDManager]: Unmount SDCard\r\n");
+  FRESULT fres = f_close(&fil);
+  if (fres == FR_OK) {
+      printf("\r\nFile closed\r\n");
+  }
+  else{ dmesg(fres); }
+
+  fres = f_mount(NULL, "", 0);
+  if (fres == FR_OK) {
+      printf("\n[SDManager]: Unmount SDCard\r\n");
+  }
+  else{ dmesg(fres); }
 }
 
