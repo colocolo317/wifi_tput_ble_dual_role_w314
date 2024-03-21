@@ -356,6 +356,8 @@ void xmit_spi_multi (
 	UINT btx			/* Number of bytes to send (even number) */
 )
 {
+
+
   static uint8_t dummy[_MIN_SS] ;
   //printf("xmit_spi_multi tx len%d\r\n", btx);
 #if 0
@@ -363,11 +365,18 @@ void xmit_spi_multi (
 		xchg_spi(*(buff+i));
 	}
 #else
+	transfer_complete=false;
   osSemaphoreAcquire(sdcard_spi.lock, osWaitForever);
 
 	//sl_si91x_gspi_send_data(sdcard_spi.handle, buff, btx);
   sl_si91x_gspi_transfer_data(sdcard_spi.handle, buff, dummy, btx);
+#if (SL_GSPI_DMA_CONFIG_ENABLE)
+  while(!transfer_complete){
+
+  }
+#else
   osSemaphoreAcquire(sdcard_spi.done, osWaitForever);
+#endif
 
   osSemaphoreRelease(sdcard_spi.lock);
 #endif

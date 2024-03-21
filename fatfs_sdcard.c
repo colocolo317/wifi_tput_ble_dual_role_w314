@@ -371,6 +371,13 @@ void fatfs_sdcard_init(void)
   else{ dmesg(fres); }
 
   char ofile_name[] = "write2.txt";
+  fres = f_unlink(ofile_name);
+  if (fres == FR_OK) {
+        printf("\r\nUnlink File \"%s\"\r\n", ofile_name);
+        bytesWrote = 0; //RESET
+    }
+    else{ dmesg(fres); }
+
   // Write File
   fres = f_open(&fil, ofile_name, FA_WRITE | FA_OPEN_ALWAYS );
   if (fres == FR_OK) {
