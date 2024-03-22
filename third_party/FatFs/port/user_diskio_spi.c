@@ -608,6 +608,8 @@ inline DSTATUS USER_SPI_initialize (
 	if (ty) {			/* OK */
 		FCLK_FAST();			/* Set fast clock */
 		Stat &= ~STA_NOINIT;	/* Clear STA_NOINIT flag */
+		printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
+		printf("SysTimer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
 	} else {			/* Failed */
 		Stat = STA_NOINIT;
 	}

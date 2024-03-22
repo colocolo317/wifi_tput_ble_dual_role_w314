@@ -175,7 +175,7 @@ static const GSPI_RESOURCES GSPI_MASTER_Resources = {
     //pins
     {
     &gspi_clock,
-    &gspi_cs0,
+    NULL, //&gspi_cs0,
 #ifdef GSPI_MULTI_SLAVE
     &gspi_cs1,
     &gspi_cs2,

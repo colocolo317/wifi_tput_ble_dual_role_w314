@@ -130,6 +130,8 @@
 #if 0
 osSemaphoreId_t sdcard_thread_sem;
 #endif
+
+#define FASTCLKTIME(a) ((a) * 32 / 180)
 /******************************************************
  *               Variable Definitions
  ******************************************************/
@@ -207,6 +209,9 @@ static void application_start(void *argument)
 {
   UNUSED_PARAMETER(argument);
   sl_status_t status;
+
+  printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
+  printf("SysTimer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
 
   status = sl_net_init(SL_NET_WIFI_CLIENT_INTERFACE, &http_client_configuration, NULL, NULL);
   if (status != SL_STATUS_OK) {
@@ -329,9 +334,10 @@ sl_status_t http_client_application(void)
   //SL_DEBUG_LOG("\r\nGET Data response:\n%s \nOffset: %ld\r\n", app_buffer, app_buff_index);
   printf("\r\nReceived data length: %ld\r\n", app_buff_index); //javi
   uint32_t duration   = osKernelGetTickCount() - start_time;
-  printf("Total time: (%lu ms)\r\n",duration);
+  printf("Total time: (%lu ms)\r\n", FASTCLKTIME(duration) );
 
   printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
+  printf("SysTimer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
 
   printf("\r\nHTTP GET request Success\r\n");
   reset_http_handles();
@@ -454,7 +460,7 @@ sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
 
 #if 0
       section_time = osKernelGetTickCount();
-      printf("get new packet: %lu ms\r\n",section_time-last_time);
+      printf("get new packet: %lu ms\r\n",FASTCLKTIME(section_time-last_time));
 #endif
 #if 0
       osDelay(30); //can't use any block call inside here
@@ -464,7 +470,7 @@ sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
 #endif
 #if 0
       last_time = osKernelGetTickCount();
-      printf("wrote packet done: %lu ms, %u bytes\r\n",last_time-section_time, get_response->data_length);
+      printf("wrote packet done: %lu ms, %u bytes\r\n",FASTCLKTIME(last_time-section_time), get_response->data_length);
 #endif
       if(fres != FR_OK)
         { dmesg(fres); }
@@ -477,10 +483,10 @@ sl_status_t http_get_response_callback_handler(const sl_http_client_t *client,
         //memcpy(app_buffer, get_response->data_buffer, get_response->data_length);  //javi
 
         section_time = osKernelGetTickCount();
-        printf("get final packet: %lu ms\r\n",section_time-last_time);
+        printf("get final packet: %lu ms\r\n",FASTCLKTIME(section_time-last_time));
         FRESULT fres = sdcard_write(get_response->data_buffer, get_response->data_length);
         last_time = osKernelGetTickCount();
-        printf("wrote packet done: %lu ms, %u bytes\r\n",last_time-section_time, get_response->data_length);
+        printf("wrote packet done: %lu ms, %u bytes\r\n",FASTCLKTIME(last_time-section_time), get_response->data_length);
         if(fres != FR_OK)
           { dmesg(fres); }
       app_buff_index += get_response->data_length;
