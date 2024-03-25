@@ -564,6 +564,9 @@ static void reset_http_handles(void)
 
 void app_init(const void *unused)
 {
+  printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
+  printf("Sys Timer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
+
   UNUSED_PARAMETER(unused);
 #if 0
   osThreadNew((osThreadFunc_t)application_start, NULL, &thread_attributes);

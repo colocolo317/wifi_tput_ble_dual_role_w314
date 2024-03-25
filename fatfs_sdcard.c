@@ -24,7 +24,7 @@
 
 
 #define MAX_READ_BUF_LEN 4096
-
+#define FASTCLKTIME(a) ((a) * 32 / 180)
 
 /*******************************************************************************
  **********************  Local Function prototypes   ***************************
@@ -247,7 +247,7 @@ void StartSDManager(void const *argument) {
 
 #if 1
         // Read File
-        fres = f_open(&fil, "WRITE.TXT", FA_OPEN_ALWAYS |FA_READ );
+        fres = f_open(&fil, "WRITE3.TXT", FA_OPEN_ALWAYS |FA_READ );
         if (fres == FR_OK)
         {
           //int res = f_gets((TCHAR*)readBuf, 30, &fil);
@@ -272,7 +272,9 @@ void StartSDManager(void const *argument) {
             uint32_t duration   = osKernelGetTickCount() - start_time;
 
 
-          printf("\r\n Read File Duration: (%lums), total read: %lu byte\r\n", duration, total_byteread);
+          printf("\r\n Read File Duration: (%lums), total read: %lu byte\r\n", FASTCLKTIME(duration), total_byteread);
+          printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
+          printf("Sys Timer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
         }
         else
         {
@@ -302,7 +304,9 @@ void StartSDManager(void const *argument) {
             printf("\n[SDManager][Write_File]: ");
           dmesg(fres);
         }
-        printf("\r\nDuration: (%lums)\r\n", duration);
+        printf("\r\nWrite duration: (%lums)\r\n", FASTCLKTIME(duration));
+        printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
+        printf("Sys Timer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
       } else {
           printf("\n[SDManager][Create_File]: ");
         dmesg(fres);

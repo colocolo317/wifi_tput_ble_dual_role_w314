@@ -691,11 +691,6 @@
 			<locationURI>STUDIO_SDK_LOC/extension/wiseconnect/components/device/silabs/si91x/wireless/src/sl_si91x_driver.c</locationURI>
 		</link>
 		<link>
-			<name>wiseconnect3_sdk_3.1.3/components/device/silabs/si91x/wireless/threading/sli_si91x_multithreaded.c</name>
-			<type>1</type>
-			<locationURI>STUDIO_SDK_LOC/extension/wiseconnect/components/device/silabs/si91x/wireless/threading/sli_si91x_multithreaded.c</locationURI>
-		</link>
-		<link>
 			<name>gecko_sdk_4.4.1/util/third_party/freertos/kernel/portable/GCC/ARM_CM4F/port.c</name>
 			<type>1</type>
 			<locationURI>STUDIO_SDK_LOC/util/third_party/freertos/kernel/portable/GCC/ARM_CM4F/port.c</locationURI>
