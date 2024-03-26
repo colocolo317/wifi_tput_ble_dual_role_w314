@@ -25,7 +25,6 @@
 
 #define MAX_READ_BUF_LEN 4096
 #define FASTCLKTIME(a) ((a) * 32 / 180)
-
 /*******************************************************************************
  **********************  Local Function prototypes   ***************************
  ******************************************************************************/
@@ -213,6 +212,7 @@ void StartSDManager(void const *argument) {
   unsigned int read;
   unsigned int bytesWrote;
 
+  uint8_t* dummy_text = init_dummy_text();
   //const uint8_t max_rbuf_len = 128;
 
   uint8_t readBuf[MAX_READ_BUF_LEN] = {0};
@@ -272,7 +272,8 @@ void StartSDManager(void const *argument) {
             uint32_t duration   = osKernelGetTickCount() - start_time;
 
 
-          printf("\r\n Read File Duration: (%lums), total read: %lu byte\r\n", FASTCLKTIME(duration), total_byteread);
+          printf("\r\n Read File Duration: (%lu ms), total read: %lu byte\r\n", FASTCLKTIME(duration), total_byteread);
+          printf("read buffer size: %lu\r\n",MAX_READ_BUF_LEN);
           printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
           printf("Sys Timer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
         }
@@ -282,10 +283,16 @@ void StartSDManager(void const *argument) {
           dmesg(fres);
         }
         f_close(&fil);
-        osDelay(100);
+        osDelay(1000);
 #endif
 
 #if 1
+      fres = f_unlink("write3.txt");
+      if (fres != FR_OK)
+      { dmesg(fres); }
+      else
+      { printf("unlink write3.txt\r\n");}
+
       // Write File
       fres = f_open(&fil, "write3.txt", FA_WRITE | FA_OPEN_ALWAYS );
       if (fres == FR_OK) {
@@ -293,18 +300,31 @@ void StartSDManager(void const *argument) {
         //strncpy((char*) writeBuf, "I hate Java!", 13);
         //uint8_t bytesWrote;
         uint32_t start_time = osKernelGetTickCount();
+
+        uint32_t total_bytes = 0;
+#if 0
         fres = f_write(&fil, dummy_file, dummy_file_len, &bytesWrote);
+        total_bytes = bytesWrote;
+#else
+        for (uint32_t i = 0; i < DUMMY_ITERATION; i++){
+            fres = f_write(&fil, dummy_text, DUMMY_TEXT_LEN, &bytesWrote);
+
+            if (fres != FR_OK)
+            { dmesg(fres); }
+        }
+
+        total_bytes = DUMMY_WRITE_LEN;
+#endif
         uint32_t duration   = osKernelGetTickCount() - start_time;
         if (fres == FR_OK) {
             printf("\n[SDManager]: Write File");
-            printf("\n[SDManager]: Wrote %i bytes to 'write3.txt'!\r\n",
-              bytesWrote);
-
+            printf("\n[SDManager]: Wrote %i bytes to 'write3.txt'!\r\n", total_bytes);
         } else {
             printf("\n[SDManager][Write_File]: ");
           dmesg(fres);
         }
-        printf("\r\nWrite duration: (%lums)\r\n", FASTCLKTIME(duration));
+        printf("\r\nWrite duration: (%lu ms)\r\n", FASTCLKTIME(duration));
+        printf("write buffer size: %lu\r\n", DUMMY_TEXT_LEN);
         printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
         printf("Sys Timer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
       } else {
@@ -320,6 +340,8 @@ void StartSDManager(void const *argument) {
         printf("\n[SDManager]: ");
       dmesg(fres);
     }
+
+    ls("");
 
     fres=f_mount(NULL, "", 0);
     if (fres != FR_OK) {dmesg(fres);};
