@@ -331,7 +331,8 @@ static void rcvr_spi_multi ( BYTE *buff,		/* Pointer to data buffer */
 		*(buff+i) = xchg_spi(0xFF);
 	}
 #else
-	static uint8_t dummy[_MIN_SS] ;
+
+	static uint8_t dummy[FF_MIN_SS] ;
   osSemaphoreAcquire(sdcard_spi.lock, osWaitForever);
 
   //FIXME. we should use sl_si91x_gspi_receive_data()
@@ -357,8 +358,7 @@ void xmit_spi_multi (
 )
 {
 
-
-  static uint8_t dummy[_MIN_SS] ;
+  static uint8_t dummy[FF_MIN_SS] ;
   //printf("xmit_spi_multi tx len%d\r\n", btx);
 #if 0
 	for(UINT i=0; i<btx; i++) {
