@@ -137,7 +137,7 @@ void dmesg(FRESULT fres) {
 
 void ls(char *path) {
 
-  printf("Files/Folder List:\n");
+  printf("\r\nFiles/Folder List:\r\n");
   fres = f_opendir(&dir, path);
 
   if (fres == FR_OK) {
@@ -148,7 +148,7 @@ void ls(char *path) {
       if ((fres != FR_OK) || (fno.fname[0] == 0)) {
         break;
       }
-      printf("\n %c%c%c%c%c %u-%02u-%02u, %02u:%02u %10d %s/%s",
+      printf(" %c%c%c%c%c %u-%02u-%02u, %02u:%02u %10d %s/%s\r\n",
           ((fno.fattrib & AM_DIR) ? 'D' : '-'),
           ((fno.fattrib & AM_RDO) ? 'R' : '-'),
           ((fno.fattrib & AM_SYS) ? 'S' : '-'),
@@ -159,7 +159,7 @@ void ls(char *path) {
           (int) fno.fsize, path, fno.fname);
     }
   }
-
+  printf("\r\n");
 }
 
 void StartSDinfo(void const *argument)
@@ -245,7 +245,7 @@ void StartSDManager(void const *argument) {
 #endif
 
 
-#if 1
+#if 0
         // Read File
         fres = f_open(&fil, "WRITE3.TXT", FA_OPEN_ALWAYS |FA_READ );
         if (fres == FR_OK)
