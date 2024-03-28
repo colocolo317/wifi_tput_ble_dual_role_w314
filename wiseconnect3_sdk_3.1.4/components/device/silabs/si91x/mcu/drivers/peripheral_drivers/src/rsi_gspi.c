@@ -33,6 +33,11 @@
 #endif
 #include "rsi_gspi.h"
 
+#define MAX_BAUDRATE_FOR_DYNAMIC_CLOCK   110000000 // Maximum baudrate for dynamic clock division factor
+#define MAX_BAUDRATE_FOR_POS_EDGE_SAMPLE 40000000  // Maximum baudrate for positive edge sample
+#define STATIC_CLOCK_DIV_FACTOR          1         // Static clock divison factor
+#define HALF_CLOCK_DIV_FACTOR            2         // To make the clock division factor half
+
 /*==============================================*/
 /**
  * @fn          int32_t GSPI_Initialize(ARM_SPI_SignalEvent_t cb_event,
@@ -41,17 +46,17 @@
  *                       RSI_UDMA_DESC_T *UDMA_Table,
  *                       RSI_UDMA_HANDLE_T *udmaHandle,
  *                       uint32_t *mem)
- * @brief        This API is used to Initialize the GSPI interface.
+ * @brief		     This API is used to Initialize the GSPI interface.
  * note: By default GSPI initialize, transfer, send and receive APIs use rsi_udma_wrapper.c
  * drivers. SL_DMA driver can be enabled by defining SL_SI91X_GSPI_DMA to 1.
  * rsi_udma_wrapper drivers can be executed from ROM. SL_DMA drivers cannot be executed
  * from ROM.
- * @param[in]    cb_event    : Pointer to the ARM_SPI_SignalEvent_t
- * @param[in]    gspi        : Pointer to the GSPI resources
+ * @param[in]	   cb_event    : Pointer to the ARM_SPI_SignalEvent_t
+ * @param[in]	   gspi        : Pointer to the GSPI resources
  * @param[in]    udma        : Pointer to the UDMA resources
  * @param[in]    UDMA_Table  : Pointer to the RSI_UDMA_DESC_T
  * @param[in]    mem         : Pointer to the memory Buffer
- * @return       excecution status
+ * @return 		   excecution status
  */
 int32_t GSPI_Initialize(ARM_SPI_SignalEvent_t cb_event,
                         const GSPI_RESOURCES *gspi,
@@ -210,10 +215,10 @@ int32_t GSPI_Initialize(ARM_SPI_SignalEvent_t cb_event,
 /*==============================================*/
 /**
  * @fn          int32_t GSPI_Uninitialize(const GSPI_RESOURCES *gspi, UDMA_RESOURCES *udma)
- * @brief        This API is used to UnInitialize the GSPI interface.
- * @param[in]    gspi        : Pointer to the GSPI resources
+ * @brief		     This API is used to UnInitialize the GSPI interface.
+ * @param[in]	   gspi        : Pointer to the GSPI resources
  * @param[in]    udma        : Pointer to the UDMA resources
- * @return       excecution status
+ * @return 		   excecution status
  */
 int32_t GSPI_Uninitialize(const GSPI_RESOURCES *gspi, UDMA_RESOURCES *udma)
 {
@@ -242,10 +247,10 @@ int32_t GSPI_Uninitialize(const GSPI_RESOURCES *gspi, UDMA_RESOURCES *udma)
 /*==============================================*/
 /**
  * @fn          int32_t GSPI_PowerControl(ARM_POWER_STATE state, const GSPI_RESOURCES *gspi)
- * @brief        This API is used control the GSPI interface power.
+ * @brief		     This API is used control the GSPI interface power.
  * @param[in]    state       : Power State
- * @param[in]    gspi        : Pointer to the GSPI resources
- * @return       excecution status
+ * @param[in]	   gspi        : Pointer to the GSPI resources
+ * @return 		   excecution status
  */
 int32_t GSPI_PowerControl(ARM_POWER_STATE state, const GSPI_RESOURCES *gspi)
 {
@@ -313,12 +318,12 @@ int32_t GSPI_PowerControl(ARM_POWER_STATE state, const GSPI_RESOURCES *gspi)
 /*==============================================*/
 /**
  * @fn          int32_t GSPI_Control(uint32_t control, uint32_t arg, const GSPI_RESOURCES *gspi, uint32_t base_clock)
- * @brief        This API is used control the GSPI interface.
+ * @brief		     This API is used control the GSPI interface.
  * @param[in]    control     : Operation
  * @param[in]    arg         : Argument of operation (optional)
- * @param[in]    gspi        : Pointer to the GSPI resources
+ * @param[in]	   gspi        : Pointer to the GSPI resources
  * @param[in]    base_clock  : GSPI clock
- * @return       excecution status
+ * @return 		   excecution status
  */
 int32_t GSPI_Control(uint32_t control,
                      uint32_t arg,
@@ -371,15 +376,23 @@ int32_t GSPI_Control(uint32_t control,
 
     case ARM_SPI_SET_BUS_SPEED:
 set_speed:
-      clk_div_factor = (base_clock / arg);
-
-      // NOTE : division factor is multiples of 2
-      clk_div_factor = (clk_div_factor / 2);
+      if (arg > MAX_BAUDRATE_FOR_DYNAMIC_CLOCK) {
+        // Clock division factor should be 1 for baudrate more than 110 MHz
+        clk_div_factor = STATIC_CLOCK_DIV_FACTOR;
+      } else {
+        clk_div_factor = (base_clock / arg);
+        // NOTE : division factor is multiples of 2
+        clk_div_factor = (clk_div_factor / HALF_CLOCK_DIV_FACTOR);
+      }
 
       if (clk_div_factor < 1) {
         gspi->reg->GSPI_CLK_CONFIG_b.GSPI_CLK_EN = 0x1;
 
         gspi->reg->GSPI_CLK_CONFIG_b.GSPI_CLK_SYNC = 0x1;
+      }
+      if (arg > MAX_BAUDRATE_FOR_POS_EDGE_SAMPLE) {
+        // Enabling negative edge sampling for baudrate more than 40 MHz
+        gspi->reg->GSPI_BUS_MODE_b.GSPI_DATA_SAMPLE_EDGE = ENABLE;
       }
       // Update the clock rate to hardware
       gspi->reg->GSPI_CLK_DIV_b.GSPI_CLK_DIV_FACTOR = (uint8_t)clk_div_factor;
@@ -551,18 +564,18 @@ set_speed:
 /**
  * @fn          int32_t GSPI_Send(const void *data,
  *                               uint32_t num,
- *                const GSPI_RESOURCES *gspi,
- *                UDMA_RESOURCES *udma,
- *                DMA_Channel_Info *chnl_info,
- *                RSI_UDMA_HANDLE_T udmaHandle)
- * @brief        This API Starts sending data to GSPI transmitter.
+ *								const GSPI_RESOURCES *gspi,
+ *								UDMA_RESOURCES *udma,
+ *								DMA_Channel_Info *chnl_info,
+ *								RSI_UDMA_HANDLE_T udmaHandle)
+ * @brief		     This API Starts sending data to GSPI transmitter.
  * @param[in]    data        : Pointer to buffer with data to send to SPI transmitter
  * @param[in]    num         : Number of data items to send
- * @param[in]    gspi        : Pointer to the GSPI resources
- * @param[in]    udma        : Pointer to the UDMA resources
- * @param[in]    CHNL_INFO   : Pointer to the UDMA channel info
+ * @param[in]	   gspi        : Pointer to the GSPI resources
+ * @param[in]	   udma        : Pointer to the UDMA resources
+ * @param[in]	   CHNL_INFO   : Pointer to the UDMA channel info
  * @param[in]    udmaHandle  : Pointer to UDMA Handle
- * @return       excecution status
+ * @return 		   excecution status
  */
 int32_t GSPI_Send(const void *data,
                   uint32_t num,
@@ -730,18 +743,18 @@ int32_t GSPI_Send(const void *data,
 /**
  * @fn          int32_t GSPI_Receive( void *data,
  *                               uint32_t num,
- *                const GSPI_RESOURCES *gspi,
- *                UDMA_RESOURCES *udma,
- *                UDMA_Channel_Info *chnl_info,
- *                RSI_UDMA_HANDLE_T udmaHandle)
- * @brief        Start receiving data from GSPI receiver.
+ *								const GSPI_RESOURCES *gspi,
+ *								UDMA_RESOURCES *udma,
+ *								UDMA_Channel_Info *chnl_info,
+ *								RSI_UDMA_HANDLE_T udmaHandle)
+ * @brief		     Start receiving data from GSPI receiver.
  * @param[in]    data        : Pointer to buffer for data to receive from GSPI receiver
  * @param[in]    num         : Number of data items to receive
- * @param[in]    gspi        : Pointer to the GSPI resources
- * @param[in]    udma        : Pointer to the UDMA resources
- * @param[in]    CHNL_INFO   : Pointer to the UDMA channel info
+ * @param[in]	   gspi        : Pointer to the GSPI resources
+ * @param[in]	   udma        : Pointer to the UDMA resources
+ * @param[in]	   CHNL_INFO   : Pointer to the UDMA channel info
  * @param[in]    udmaHandle  : Pointer to UDMA Handle
- * @return       excecution status
+ * @return 		   excecution status
  */
 int32_t GSPI_Receive(void *data,
                      uint32_t num,
@@ -986,21 +999,21 @@ int32_t GSPI_Receive(void *data,
 /*==============================================*/
 /**
  * @fn          int32_t GSPI_Transfer(const void *data_out,
- *                void *data_in,
- *                uint32_t num,
- *                const GSPI_RESOURCES *gspi,
- *                UDMA_RESOURCES *udma,
- *                UDMA_Channel_Info *chnl_info,
- *                RSI_UDMA_HANDLE_T udmaHandle)
- * @brief        Start sending/receiving data to/from GSPI transmitter/receiver.
+ *								void *data_in,
+ *								uint32_t num,
+ *								const GSPI_RESOURCES *gspi,
+ *								UDMA_RESOURCES *udma,
+ *								UDMA_Channel_Info *chnl_info,
+ *								RSI_UDMA_HANDLE_T udmaHandle)
+ * @brief		     Start sending/receiving data to/from GSPI transmitter/receiver.
  * @param[in]    data_out    : Pointer to buffer with data to send to GSPI transmitter
  * @param[in]    data_in     : Pointer to buffer for data to receive from GSPI receiver
  * @param[in]    num         : Number of data items to transfer
- * @param[in]    gspi        : Pointer to the GSPI resources
- * @param[in]    udma        : Pointer to the UDMA resources
- * @param[in]    CHNL_INFO   : Pointer to the UDMA channel info
+ * @param[in]	   gspi        : Pointer to the GSPI resources
+ * @param[in]	   udma        : Pointer to the UDMA resources
+ * @param[in]	   CHNL_INFO   : Pointer to the UDMA channel info
  * @param[in]    udmaHandle  : Pointer to UDMA Handle
- * @return       excecution status
+ * @return 		   excecution status
  */
 int32_t GSPI_Transfer(const void *data_out,
                       void *data_in,
@@ -1252,9 +1265,9 @@ int32_t GSPI_Transfer(const void *data_out,
 /*==============================================*/
 /**
  * @fn          uint32_t GSPI_GetDataCount(const GSPI_RESOURCES *gspi)
- * @brief        Get transferred data count.
- * @param[in]    gspi        : Pointer to the GSPI resources
- * @return       number of data items transferred
+ * @brief		     Get transferred data count.
+ * @param[in]	   gspi        : Pointer to the GSPI resources
+ * @return 		   number of data items transferred
  */
 uint32_t GSPI_GetDataCount(const GSPI_RESOURCES *gspi)
 {
@@ -1267,18 +1280,18 @@ uint32_t GSPI_GetDataCount(const GSPI_RESOURCES *gspi)
 /*==============================================*/
 /**
  * @fn          void GSPI_UDMA_Tx_Event(uint32_t event, uint8_t dmaCh, GSPI_RESOURCES *gspi)
- * @brief        GSPI UDMA transfer event Handler
+ * @brief		     GSPI UDMA transfer event Handler
  * @param[in]    event       : UDMA Event
  * @param[in]    dmaCh       : UDMA channel
- * @param[in]    gspi        : Pointer to the GSPI resources
- * @return       none
+ * @param[in]	   gspi        : Pointer to the GSPI resources
+ * @return 		   none
  */
 void GSPI_UDMA_Tx_Event(uint32_t event, uint8_t dmaCh, GSPI_RESOURCES *gspi)
 {
   (void)dmaCh;
   switch (event) {
     case UDMA_EVENT_XFER_DONE:
-      //gspi->info->status.busy       = 0U;
+      gspi->info->status.busy = 0U; // diff from 3.1.3 porting can't tell
       // Update TX buffer info
       gspi->xfer->tx_cnt = gspi->xfer->num;
       if (gspi->xfer->rx_buf == NULL) {
@@ -1295,11 +1308,11 @@ void GSPI_UDMA_Tx_Event(uint32_t event, uint8_t dmaCh, GSPI_RESOURCES *gspi)
 /*==============================================*/
 /**
  * @fn          void GSPI_UDMA_Rx_Event(uint32_t event, uint8_t dmaCh, GSPI_RESOURCES *gspi)
- * @brief        GSPI UDMA rx event Handler
+ * @brief		     GSPI UDMA rx event Handler
  * @param[in]    event       : UDMA Event
  * @param[in]    dmaCh       : UDMA channel
- * @param[in]    gspi        : Pointer to the GSPI resources
- * @return       none
+ * @param[in]	   gspi        : Pointer to the GSPI resources
+ * @return 		   none
  */
 void GSPI_UDMA_Rx_Event(uint32_t event, uint8_t dmaCh, GSPI_RESOURCES *gspi)
 {
@@ -1320,9 +1333,9 @@ void GSPI_UDMA_Rx_Event(uint32_t event, uint8_t dmaCh, GSPI_RESOURCES *gspi)
 /*==============================================*/
 /**
  * @fn          void GSPI_IRQHandler(const GSPI_RESOURCES *gspi)
- * @brief        GSPI IRQ Handler
- * @param[in]    gspi        : Pointer to the GSPI resources
- * @return       none
+ * @brief		     GSPI IRQ Handler
+ * @param[in]	   gspi        : Pointer to the GSPI resources
+ * @return 		   none
  */
 void GSPI_IRQHandler(const GSPI_RESOURCES *gspi)
 {
@@ -1398,6 +1411,11 @@ void GSPI_IRQHandler(const GSPI_RESOURCES *gspi)
         }
       }
     }
+  }
+  if (gspi->xfer->tx_cnt == gspi->xfer->num && gspi->xfer->rx_buf == NULL) {
+    gspi->info->status.busy = 0U;
+    event |= ARM_SPI_EVENT_TRANSFER_COMPLETE;
+    gspi->info->cb_event(event);
   }
   if (gspi->xfer->num == gspi->xfer->rx_cnt) {
     // Transfer completed
