@@ -294,7 +294,7 @@ void si91x_event_handler_thread(void *args)
           data   = (sl_si91x_queue_packet_t *)sl_si91x_host_get_buffer_data(buffer, 0, NULL);
           packet = (sl_si91x_packet_t *)sl_si91x_host_get_buffer_data(data->host_packet, 0, NULL);
 
-          SL_NET_EVENT_DISPATCH_HANDLER(data, packet); // FR_DISK_ERR after here
+          SL_NET_EVENT_DISPATCH_HANDLER(data, packet);
 
           // Free the resources associated with the packet.
           sl_si91x_host_free_buffer(data->host_packet, SL_WIFI_RX_FRAME_BUFFER);
