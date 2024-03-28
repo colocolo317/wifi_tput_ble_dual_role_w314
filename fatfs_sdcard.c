@@ -333,13 +333,13 @@ void StartSDManager(void const *argument) {
         uint32_t duration   = osKernelGetTickCount() - start_time;
         if (fres == FR_OK) {
             printf("\n[SDManager]: Write File");
-            printf("\n[SDManager]: Wrote %i bytes to 'write3.txt'!\r\n", total_bytes);
+            printf("\n[SDManager]: Wrote %lu bytes to 'write3.txt'!\r\n", total_bytes);
         } else {
             printf("\n[SDManager][Write_File]: ");
           dmesg(fres);
         }
         printf("\r\nWrite duration: (%lu ms)\r\n", FASTCLKTIME(duration));
-        printf("write buffer size: %lu\r\n", DUMMY_TEXT_LEN);
+        printf("write buffer size: %lu\r\n", (uint32_t)DUMMY_TEXT_LEN);
         printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
         printf("Sys Timer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
       } else {
