@@ -31,6 +31,7 @@
  MEMORY
  {
    rom   (rx)  : ORIGIN = 0x8202000, LENGTH = 0x1fe000
+
    ram   (rwx) : ORIGIN = 0x400, LENGTH = 0x2fc00
  }
  MEMORY
@@ -43,12 +44,11 @@ ENTRY(Reset_Handler)
  
 SECTIONS
 {
-
 	.text :
 	{
 		KEEP(*(.isr_vector))
      	  KEEP(*(.reset_handler))
-			*(EXCLUDE_FILE(*sl_si91x_bus.o *sl_si91x_driver.o *sli_si91x_multithreaded.o *rsi_deepsleep_soc.o *rsi_hal_mcu_m4_ram.o *croutine.o *event_groups.o *list.o *queue.o *stream_buffer.o *tasks.o *timers.o *cmsis_os2.o *freertos_umm_malloc_host.o *malloc_buffers.o *sl_rsi_utility.o *port.o *heap_*.o) .text*)
+			*(EXCLUDE_FILE(*sl_si91x_bus.o *sl_si91x_driver.o *sli_si91x_multithreaded.o *rsi_deepsleep_soc.o *rsi_hal_mcu_m4_ram.o *rsi_hal_mcu_m4_rom.o *croutine.o *event_groups.o *list.o *queue.o *stream_buffer.o *tasks.o *timers.o *cmsis_os2.o *freertos_umm_malloc_host.o *malloc_buffers.o *sl_rsi_utility.o *port.o *heap_*.o) .text*)
 		
     
 
@@ -65,28 +65,25 @@ SECTIONS
 		*(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
 		*(SORT(.dtors.*))
 		*(.dtors)
+		*(.rodata*)
 		
 		KEEP(*(.eh_fram e*))			
-	} > rom 
-		
+	} > rom	
 	
 	.ARM.extab : 
 	{
 		*(.ARM.extab* .gnu.linkonce.armextab.*)			
-	} > rom 
-	
+	} > rom
 	
 	__exidx_start = .;
 	.ARM.exidx :
 	{
 		*(.ARM.exidx* .gnu.linkonce.armexidx.*)			
 	} > rom 
-	 
 	__exidx_end = .;
 	__etext = .;
 	
 	
-
 
 	
 	/* _sidata is used in code startup code */
@@ -102,10 +99,10 @@ SECTIONS
 		KEEP(*(.ramVector))	
 		KEEP(*(.init))
 		KEEP(*(.fini))
-		*(.rodata*)
 		*(.data*)
 		
 		*rsi_hal_mcu_m4_ram.o(.text*)
+		*rsi_hal_mcu_m4_rom.o(.text*)
 		*sl_si91x_driver.o(.text*)
 		*sl_si91x_bus.o(.text*)
 		*sli_si91x_multithreaded.o(.text*)
@@ -153,8 +150,7 @@ SECTIONS
 		
 		/* _edata is used in startup code */
 		_edata = __data_end__; 
-	} > ram AT> rom
-		
+	} > ram AT> rom	
 	
 	.bss (NOLOAD) :
 	{
@@ -166,15 +162,12 @@ SECTIONS
 		__bss_end__ = .; 
 	} > ram 
 	
-
-	/* Modify the below value to change the stack size */
-	StackSize = 0x3000;
+	
 	.stack (NOLOAD):
 	{
 		__StackLimit = .;
 		KEEP(*(.stack*))
 		. = ALIGN(4);
-		. += StackSize;
 		__StackTop = .;
 		PROVIDE(__stack = __StackTop);			
 	} > ram
@@ -201,5 +194,6 @@ SECTIONS
 	.udma_addr1 :
 	{
 		*(.udma_addr1*)		
-	} > udma1 AT> rom   
+	} > udma1 AT> rom	
+   
 }
