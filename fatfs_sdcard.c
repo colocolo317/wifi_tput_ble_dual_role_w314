@@ -5,7 +5,7 @@
 #include "cmsis_os2.h"
 #include <stdio.h>
 #include <string.h>
-#include "app_common_config.h"
+//#include "app_common_config.h"
 #include "rsi_common_apis.h"
 #include "rsi_debug.h"
 #include "freertos.h"
