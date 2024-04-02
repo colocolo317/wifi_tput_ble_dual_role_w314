@@ -302,6 +302,7 @@ void StartSDManager(void const *argument) {
 #endif
 
 #if 1
+    while(1){
       fres = f_unlink("write3.txt");
       if (fres != FR_OK)
       { dmesg(fres); }
@@ -349,6 +350,9 @@ void StartSDManager(void const *argument) {
 
       fres=f_close(&fil);
       if (fres != FR_OK) {dmesg(fres);};
+
+      osDelay(5000);
+    }
 #endif
 
     } else {
@@ -386,37 +390,6 @@ void fatfs_sdcard_init(void)
 
   MX_FATFS_Init();
 
-  printf("\nStartSDManager!\n");
-
-  printf("\n[SDManager]: Mount SDCard\r\n");
-
-  fres = f_mount(&FatFs, "", 1); // 1 -> Mount now
-  if (fres == FR_OK)
-  {
-      printf("Mount success\r\n");
-      ls("");
-      printf("\r\n");
-  }
-  else{ dmesg(fres); }
-
-  char ofile_name[] = "write2.txt";
-  fres = f_unlink(ofile_name);
-  if (fres == FR_OK) {
-        printf("\r\nUnlink File \"%s\"\r\n", ofile_name);
-        bytesWrote = 0; //RESET
-    }
-    else{ dmesg(fres); }
-
-  // Write File
-  fres = f_open(&fil, ofile_name, FA_WRITE | FA_OPEN_ALWAYS );
-  if (fres == FR_OK) {
-      printf("\r\nFile \"%s\" open\r\n", ofile_name);
-      bytesWrote = 0; //RESET
-  }
-  else{ dmesg(fres); }
-
-
-#if 0
   SDCardMutexHandle = osMutexNew(NULL);
   //osMutexRelease(SDCardMutexHandle);
 
@@ -429,7 +402,6 @@ void fatfs_sdcard_init(void)
 #endif
   /* definition and creation of SDManager */
   //osThreadDef(SDManager, StartSDManager, osPriorityRealtime, 0, 300);
-#endif
 
 }
 void sdcard_ends(){

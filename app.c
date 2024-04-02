@@ -558,18 +558,16 @@ static void reset_http_handles(void)
 
 void app_init(const void *unused)
 {
-
+  printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
+  printf("Sys Timer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
 
   UNUSED_PARAMETER(unused);
 #if 0
-  sdcard_thread_sem = osSemaphoreNew(1, 0, NULL);
-  if (sdcard_thread_sem == NULL) {
-    LOG_PRINT("Failed to create sdcard_thread_sem\n");
-    return;
-  }
+  osThreadNew((osThreadFunc_t)application_start, NULL, &thread_attributes);
+#else
+  UNUSED_PARAMETER(application_start);
 #endif
 
-  osThreadNew((osThreadFunc_t)application_start, NULL, &thread_attributes);
-
-
+  extern void fatfs_sdcard_init();
+  fatfs_sdcard_init();
 }
