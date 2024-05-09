@@ -370,7 +370,7 @@ void xmit_spi_multi (
 
 	//sl_si91x_gspi_send_data(sdcard_spi.handle, buff, btx);
   sl_si91x_gspi_transfer_data(sdcard_spi.handle, buff, dummy, btx);
-#if (SL_GSPI_DMA_CONFIG_ENABLE)
+#if 0//(SL_GSPI_DMA_CONFIG_ENABLE)
   while(!transfer_complete){
 
   }
@@ -401,6 +401,7 @@ int wait_ready (	/* 1:Ready, 0:Timeout */
 
 	waitSpiTimerTickStart = osKernelGetTickCount();
 	waitSpiTimerTickDelay = (uint32_t)wt;
+
 	do {
 		d = xchg_spi(0xFF);
 		/* This loop takes a time. Insert rot_rdq() here for multitask envilonment. */
@@ -488,7 +489,7 @@ int xmit_datablock (	/* 1:OK, 0:Failed */
 
 	xchg_spi(token);					/* Send token */
 	if (token != 0xFD) {				/* Send data if token is other than StopTran */
-		xmit_spi_multi(buff, 512);		/* Data */
+		xmit_spi_multi(buff, FF_MIN_SS);		/* Data */
 		xchg_spi(0xFF); xchg_spi(0xFF);	/* Dummy CRC */
 
 		resp = xchg_spi(0xFF);				/* Receive data resp */
@@ -596,7 +597,7 @@ inline DSTATUS USER_SPI_initialize (
 				ty = CT_MMC; cmd = CMD1;	/* MMCv3 (CMD1(0)) */
 			}
 			while (SPI_Timer_Status() && send_cmd(cmd, 0)) ;		/* Wait for end of initialization */
-			if (!SPI_Timer_Status() || send_cmd(CMD16, 512) != 0)	/* Set block length: 512 */
+			if (!SPI_Timer_Status() || send_cmd(CMD16, FF_MIN_SS) != 0)	/* Set block length: FF_MIN_SS */
 				ty = 0;
 		}
 	}
@@ -649,19 +650,19 @@ inline DRESULT USER_SPI_read (
 	if (drv || !count) return RES_PARERR;		/* Check parameter */
 	if (Stat & STA_NOINIT) return RES_NOTRDY;	/* Check if drive is ready */
 
-	if (!(CardType & CT_BLOCK)) sector *= 512;	/* LBA ot BA conversion (byte addressing cards) */
+	if (!(CardType & CT_BLOCK)) sector *= FF_MIN_SS;	/* LBA ot BA conversion (byte addressing cards) */
 
 	if (count == 1) {	/* Single sector read */
 		if ((send_cmd(CMD17, sector) == 0)	/* READ_SINGLE_BLOCK */
-			&& rcvr_datablock(buff, 512)) {
+			&& rcvr_datablock(buff, FF_MIN_SS)) {
 			count = 0;
 		}
 	}
 	else {				/* Multiple sector read */
 		if (send_cmd(CMD18, sector) == 0) {	/* READ_MULTIPLE_BLOCK */
 			do {
-				if (!rcvr_datablock(buff, 512)) break;
-				buff += 512;
+				if (!rcvr_datablock(buff, FF_MIN_SS)) break;
+				buff += FF_MIN_SS;
 			} while (--count);
 			send_cmd(CMD12, 0);				/* STOP_TRANSMISSION */
 		}
@@ -690,7 +691,7 @@ inline DRESULT USER_SPI_write (
 	if (Stat & STA_NOINIT) return RES_NOTRDY;	/* Check drive status */
 	if (Stat & STA_PROTECT) return RES_WRPRT;	/* Check write protect */
 
-	if (!(CardType & CT_BLOCK)) sector *= 512;	/* LBA ==> BA conversion (byte addressing cards) */
+	if (!(CardType & CT_BLOCK)) sector *= FF_MIN_SS;	/* LBA ==> BA conversion (byte addressing cards) */
 
 	if (count == 1) {	/* Single sector write */
 		if ((send_cmd(CMD24, sector) == 0)	/* WRITE_BLOCK */
@@ -703,7 +704,7 @@ inline DRESULT USER_SPI_write (
 		if (send_cmd(CMD25, sector) == 0) {	/* WRITE_MULTIPLE_BLOCK */
 			do {
 				if (!xmit_datablock(buff, 0xFC)) break;
-				buff += 512;
+				buff += FF_MIN_SS;
 			} while (--count);
 			if (!xmit_datablock(0, 0xFD)) count = 1;	/* STOP_TRAN token */
 		}
@@ -783,7 +784,7 @@ inline DRESULT USER_SPI_ioctl (
 		if (!(csd[0] >> 6) && !(csd[10] & 0x40)) break;	/* Check if sector erase can be applied to the card */
 		dp = buff; st = dp[0]; ed = dp[1];				/* Load sector block */
 		if (!(CardType & CT_BLOCK)) {
-			st *= 512; ed *= 512;
+			st *= FF_MIN_SS; ed *= FF_MIN_SS;
 		}
 		if (send_cmd(CMD32, st) == 0 && send_cmd(CMD33, ed) == 0 && send_cmd(CMD38, 0) == 0 && wait_ready(30000)) {	/* Erase sector block */
 			res = RES_OK;	/* FatFs does not check result of this command */

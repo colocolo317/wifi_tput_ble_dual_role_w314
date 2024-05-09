@@ -123,7 +123,11 @@ sl_status_t sl_si91x_gspi_configure_clock(sl_gspi_clock_config_t *clock_configur
     if (status != SL_STATUS_OK) {
       break;
     }
+    // RSI API to set SOC pll clock is called and the status is converted to the SL error code.
     RSI_CLK_SocPllLockConfig(MANUAL_LOCK, BYPASS_MANUAL_LOCK, clock_configuration->soc_pll_mm_count_value);
+    error_status =
+      RSI_CLK_SetSocPllFreq(M4CLK, clock_configuration->soc_pll_clock, clock_configuration->soc_pll_reference_clock);
+    status = convert_rsi_to_sl_error_code(error_status);
   } while (false);
   return status;
 }
@@ -274,7 +278,7 @@ sl_status_t sl_si91x_gspi_set_configuration(sl_gspi_handle_t gspi_handle,
 {
   sl_status_t status;
   int32_t error_status;
-  uint32_t input_mode, baudrate;
+  uint32_t input_mode;
   /* GSPI_UC is defined by default. when this macro (GSPI_UC) is defined, peripheral
    * configuration is directly taken from the configuration set in the universal configuration (UC).
    * if the application requires the configuration to be changed in run-time, undefined this macro
@@ -299,23 +303,6 @@ sl_status_t sl_si91x_gspi_set_configuration(sl_gspi_handle_t gspi_handle,
     // passed inside the contol API.
     status = validate_control_parameters(control_configuration);
     // If the status is not equal to SL_STATUS_OK, returns error code.
-    if (status != SL_STATUS_OK) {
-      break;
-    }
-
-    // 1 MHz is the minimum frequency to configure SOC PLL, if the bitrate is lower than 500 KHz then
-    // SOC PLL frequency is set to 1MHz
-    if (control_configuration->bitrate >= MINIMUM_BITRATE) {
-      baudrate = control_configuration->bitrate * DOUBLE;
-    } else {
-      baudrate = MINIMUM_SOC_PLL_FREQUENCY;
-    }
-
-    // RSI API to set SOC pll clock is called and the status is converted to the SL error code.
-    // Setting the soc_pll clock to double of the bitrate so the spi clock provides proper output as the clock
-    // divider will be 1
-    error_status = RSI_CLK_SetSocPllFreq(M4CLK, baudrate, SOC_PLL_REF_FREQUENCY);
-    status       = convert_rsi_to_sl_error_code(error_status);
     if (status != SL_STATUS_OK) {
       break;
     }
