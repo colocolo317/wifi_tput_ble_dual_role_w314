@@ -439,10 +439,14 @@ void sdcard_ends(){
   }
   else{ dmesg(fres); }
 
-  fres = f_mount(NULL, "", 0);
+  ls("");
+
+  fres = f_mount(0, ".", 0);
   if (fres == FR_OK) {
       printf("\n[SDManager]: Unmount SDCard\r\n");
   }
   else{ dmesg(fres); }
+
+
 }
 

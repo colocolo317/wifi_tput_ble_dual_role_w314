@@ -36,6 +36,7 @@
 #include "sl_http_client.h"
 #include <string.h>
 #include "sdcard.h"
+#include "user_diskio_spi.h"
 
 
 //! Include index html page
@@ -210,9 +211,11 @@ static void application_start(void *argument)
   UNUSED_PARAMETER(argument);
   sl_status_t status;
 
+  init_gspi();
+
   printf("Tick Freq: (%lu hz)\r\n",osKernelGetTickFreq());
   printf("SysTimer Freq: (%lu hz)\r\n",osKernelGetSysTimerFreq());
-
+#if 0
   status = sl_net_init(SL_NET_WIFI_CLIENT_INTERFACE, &http_client_configuration, NULL, NULL);
   if (status != SL_STATUS_OK) {
     printf("\r\nFailed to start Wi-Fi client interface: 0x%lx\r\n", status);
@@ -239,15 +242,29 @@ static void application_start(void *argument)
   }
   printf("\r\nLoad TLS CA certificate at index %d Success\r\n", CERTIFICATE_INDEX);
 #endif
+#endif
+//while(1)
+{
   fatfs_sdcard_init();
   //pfile = sdcard_get_wfile();
 
+
+#if 0
   status = http_client_application();
   if (status != SL_STATUS_OK) {
     printf("\r\nUnexpected error while HTTP client operation: 0x%lX\r\n", status);
     return;
   }
+#endif
+  osDelay(6000);
   sdcard_ends();
+  osDelay(6000);
+  fatfs_sdcard_init();
+  osDelay(6000);
+  sdcard_ends();
+}
+
+
   printf("\r\nApplication Demonstration Completed Successfully!\r\n");
 }
 

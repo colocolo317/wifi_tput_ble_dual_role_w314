@@ -35,4 +35,6 @@ extern DRESULT USER_SPI_read (BYTE pdrv, BYTE *buff, DWORD sector, UINT count);
   extern DRESULT USER_SPI_ioctl (BYTE pdrv, BYTE cmd, void *buff);
 #endif /* _USE_IOCTL == 1 */
 
+void init_gspi(void);
+
 #endif

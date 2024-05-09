@@ -213,7 +213,7 @@ static sl_status_t init_clock_configuration_structure(sl_gspi_clock_config_t *cl
   return status;
 }
 
-static void init_gspi(void)
+void init_gspi(void)
 {
     sl_status_t status;
     sl_gspi_clock_config_t clock_config;
@@ -570,7 +570,7 @@ inline DSTATUS USER_SPI_initialize (
 
 	if (drv != 0) return STA_NOINIT;		/* Supports only drive 0 */
 
-	init_gspi(); /* Initialize SPI */
+	//init_gspi(); /* Initialize SPI */
 
 	if (Stat & STA_NODISK) return Stat;	/* Is card existing in the soket? */
 
