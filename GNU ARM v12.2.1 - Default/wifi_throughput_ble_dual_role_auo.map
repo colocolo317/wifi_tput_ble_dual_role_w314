@@ -7376,86 +7376,86 @@ LOAD linker stubs
  .comment       0x00000045       0x46 ./wiseconnect3_sdk_3.1.4/components/service/network_manager/src/sl_net_basic_credentials.o
  .comment       0x00000045       0x46 ./wiseconnect3_sdk_3.1.4/components/service/network_manager/src/sl_net_basic_profiles.o
 
-.debug_info     0x00000000    0xcb881
+.debug_info     0x00000000    0xcb87a
  .debug_info    0x00000000     0x1ba4 ./app.o
- .debug_info    0x00001ba4     0x1721 ./fatfs_sdcard.o
- .debug_info    0x000032c5       0x8d ./main.o
- .debug_info    0x00003352      0x201 ./autogen/sl_event_handler.o
- .debug_info    0x00003553      0x312 ./gecko_sdk_4.4.1/platform/common/src/sl_slist.o
- .debug_info    0x00003865      0x2bc ./gecko_sdk_4.4.1/platform/common/src/sli_cmsis_os2_ext_task_register.o
- .debug_info    0x00003b21       0xa6 ./gecko_sdk_4.4.1/platform/service/system/src/sl_system_init.o
- .debug_info    0x00003bc7       0x56 ./gecko_sdk_4.4.1/platform/service/system/src/sl_system_kernel.o
- .debug_info    0x00003c1d     0x5fe9 ./gecko_sdk_4.4.1/util/third_party/freertos/cmsis/Source/cmsis_os2.o
- .debug_info    0x00009c06      0xec6 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/event_groups.o
- .debug_info    0x0000aacc      0x316 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/list.o
- .debug_info    0x0000ade2     0x2618 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/queue.o
- .debug_info    0x0000d3fa     0x3430 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/tasks.o
- .debug_info    0x0001082a     0x1791 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/timers.o
- .debug_info    0x00011fbb      0x5b9 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/portable/GCC/ARM_CM4F/port.o
- .debug_info    0x00012574      0x613 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/portable/MemMang/heap_4.o
- .debug_info    0x00012b87      0x64f ./third_party/FatFs/port/fatfs.o
- .debug_info    0x000131d6      0x4b2 ./third_party/FatFs/port/user_diskio.o
- .debug_info    0x00013688     0x254e ./third_party/FatFs/port/user_diskio_spi.o
- .debug_info    0x00015bd6      0x4f4 ./third_party/FatFs/src/diskio.o
- .debug_info    0x000160ca     0x4cc6 ./third_party/FatFs/src/ff.o
- .debug_info    0x0001ad90      0x43d ./third_party/FatFs/src/ff_gen_drv.o
- .debug_info    0x0001b1cd      0x3a4 ./third_party/FatFs/src/ffunicode.o
- .debug_info    0x0001b571      0xcdc ./wiseconnect3_sdk_3.1.4/components/board/silabs/src/rsi_board.o
- .debug_info    0x0001c24d      0xcde ./wiseconnect3_sdk_3.1.4/components/common/src/sl_utility.o
- .debug_info    0x0001cf2b     0x1393 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/iPMU_prog/iPMU_dotc/ipmu_apis.o
- .debug_info    0x0001e2be      0x6b7 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/iPMU_prog/iPMU_dotc/rsi_system_config_917.o
- .debug_info    0x0001e975     0x5a0d ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/rsi_deepsleep_soc.o
- .debug_info    0x00024382      0x4bb ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/startup_si91x.o
- .debug_info    0x0002483d     0x5a5b ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/system_si91x.o
- .debug_info    0x0002a298      0xccd ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/common/src/rsi_debug.o
- .debug_info    0x0002af65       0x8f ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/common/src/sl_si91x_stack_object_declare.o
- .debug_info    0x0002aff4      0xbaa ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/common/src/syscalls.o
- .debug_info    0x0002bb9e      0x647 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/config/src/rsi_nvic_priorities_config.o
- .debug_info    0x0002c1e5     0x432b ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/cmsis_driver/GSPI.o
- .debug_info    0x00030510     0x1327 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/cmsis_driver/UDMA.o
- .debug_info    0x00031837     0x59df ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/cmsis_driver/USART.o
- .debug_info    0x00037216     0x394c ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/clock_update.o
- .debug_info    0x0003ab62     0x2ed5 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_egpio.o
- .debug_info    0x0003da37     0x8432 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_gspi.o
- .debug_info    0x00045e69     0x2991 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_udma.o
- .debug_info    0x000487fa     0x6e7d ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_udma_wrapper.o
- .debug_info    0x0004f677     0xb4f7 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_usart.o
- .debug_info    0x0005ab6e     0x3ccd ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/systemlevel/src/rsi_ipmu.o
- .debug_info    0x0005e83b     0x7bd9 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/systemlevel/src/rsi_pll.o
- .debug_info    0x00066414     0x5d24 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/systemlevel/src/rsi_ulpss_clk.o
- .debug_info    0x0006c138     0x2aa3 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/unified_api/src/sl_si91x_dma.o
- .debug_info    0x0006ebdb     0x36c8 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/unified_api/src/sl_si91x_driver_gpio.o
- .debug_info    0x000722a3     0x51ea ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/unified_api/src/sl_si91x_gspi.o
- .debug_info    0x0007748d     0x7b65 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/unified_peripheral_drivers/src/sl_si91x_peripheral_gpio.o
- .debug_info    0x0007eff2      0x15b ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/rsi_hal_mcu_m4_ram.o
- .debug_info    0x0007f14d      0xa77 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/rsi_hal_mcu_m4_rom.o
- .debug_info    0x0007fbc4     0x10dd ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/sl_platform.o
- .debug_info    0x00080ca1    0x194c7 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/sl_platform_wireless.o
- .debug_info    0x0009a168      0xba8 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/sl_si91x_bus.o
- .debug_info    0x0009ad10     0x1125 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/sli_siwx917_soc.o
- .debug_info    0x0009be35     0x5c91 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ble/src/rsi_bt_ble.o
- .debug_info    0x000a1ac6     0x2fec ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ble/src/rsi_common_apis.o
- .debug_info    0x000a4ab2      0xf7e ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ble/src/rsi_utils.o
- .debug_info    0x000a5a30      0x54d ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/errno/src/sl_si91x_errno.o
- .debug_info    0x000a5f7d      0xa1a ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/host_mcu/si91x/siwx917_soc_ncp_host.o
- .debug_info    0x000a6997      0x98a ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/memory/malloc_buffers.o
- .debug_info    0x000a7321      0xcf6 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/sl_net/src/sl_net_rsi_utility.o
- .debug_info    0x000a8017     0x1050 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/sl_net/src/sl_net_si91x_integration_handler.o
- .debug_info    0x000a9067      0xbbd ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/sl_net/src/sl_si91x_net_credentials.o
- .debug_info    0x000a9c24     0x12e9 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/sl_net/src/sl_si91x_net_internal_stack.o
- .debug_info    0x000aaf0d     0x309a ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/socket/src/sl_si91x_socket_utility.o
- .debug_info    0x000adfa7     0x33cb ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/src/sl_rsi_utility.o
- .debug_info    0x000b1372      0xae8 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/src/sl_si91x_callback_framework.o
- .debug_info    0x000b1e5a     0x5f4d ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/src/sl_si91x_driver.o
- .debug_info    0x000b7da7     0x1593 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/src/sl_si91x_http_client_callback_framework.o
- .debug_info    0x000b933a     0x2d24 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/threading/sli_si91x_multithreaded.o
- .debug_info    0x000bc05e     0x6cdb ./wiseconnect3_sdk_3.1.4/components/protocol/wifi/si91x/sl_wifi.o
- .debug_info    0x000c2d39     0x1406 ./wiseconnect3_sdk_3.1.4/components/protocol/wifi/src/sl_wifi_callback_framework.o
- .debug_info    0x000c413f     0x21f1 ./wiseconnect3_sdk_3.1.4/components/service/http_client/si91x_socket/sl_http_client.o
- .debug_info    0x000c6330     0x2213 ./wiseconnect3_sdk_3.1.4/components/service/network_manager/si91x/sl_net_si91x.o
- .debug_info    0x000c8543     0x15fa ./wiseconnect3_sdk_3.1.4/components/service/network_manager/src/sl_net.o
- .debug_info    0x000c9b3d      0xac0 ./wiseconnect3_sdk_3.1.4/components/service/network_manager/src/sl_net_basic_credentials.o
- .debug_info    0x000ca5fd     0x1284 ./wiseconnect3_sdk_3.1.4/components/service/network_manager/src/sl_net_basic_profiles.o
+ .debug_info    0x00001ba4     0x171a ./fatfs_sdcard.o
+ .debug_info    0x000032be       0x8d ./main.o
+ .debug_info    0x0000334b      0x201 ./autogen/sl_event_handler.o
+ .debug_info    0x0000354c      0x312 ./gecko_sdk_4.4.1/platform/common/src/sl_slist.o
+ .debug_info    0x0000385e      0x2bc ./gecko_sdk_4.4.1/platform/common/src/sli_cmsis_os2_ext_task_register.o
+ .debug_info    0x00003b1a       0xa6 ./gecko_sdk_4.4.1/platform/service/system/src/sl_system_init.o
+ .debug_info    0x00003bc0       0x56 ./gecko_sdk_4.4.1/platform/service/system/src/sl_system_kernel.o
+ .debug_info    0x00003c16     0x5fe9 ./gecko_sdk_4.4.1/util/third_party/freertos/cmsis/Source/cmsis_os2.o
+ .debug_info    0x00009bff      0xec6 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/event_groups.o
+ .debug_info    0x0000aac5      0x316 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/list.o
+ .debug_info    0x0000addb     0x2618 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/queue.o
+ .debug_info    0x0000d3f3     0x3430 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/tasks.o
+ .debug_info    0x00010823     0x1791 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/timers.o
+ .debug_info    0x00011fb4      0x5b9 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/portable/GCC/ARM_CM4F/port.o
+ .debug_info    0x0001256d      0x613 ./gecko_sdk_4.4.1/util/third_party/freertos/kernel/portable/MemMang/heap_4.o
+ .debug_info    0x00012b80      0x64f ./third_party/FatFs/port/fatfs.o
+ .debug_info    0x000131cf      0x4b2 ./third_party/FatFs/port/user_diskio.o
+ .debug_info    0x00013681     0x254e ./third_party/FatFs/port/user_diskio_spi.o
+ .debug_info    0x00015bcf      0x4f4 ./third_party/FatFs/src/diskio.o
+ .debug_info    0x000160c3     0x4cc6 ./third_party/FatFs/src/ff.o
+ .debug_info    0x0001ad89      0x43d ./third_party/FatFs/src/ff_gen_drv.o
+ .debug_info    0x0001b1c6      0x3a4 ./third_party/FatFs/src/ffunicode.o
+ .debug_info    0x0001b56a      0xcdc ./wiseconnect3_sdk_3.1.4/components/board/silabs/src/rsi_board.o
+ .debug_info    0x0001c246      0xcde ./wiseconnect3_sdk_3.1.4/components/common/src/sl_utility.o
+ .debug_info    0x0001cf24     0x1393 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/iPMU_prog/iPMU_dotc/ipmu_apis.o
+ .debug_info    0x0001e2b7      0x6b7 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/iPMU_prog/iPMU_dotc/rsi_system_config_917.o
+ .debug_info    0x0001e96e     0x5a0d ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/rsi_deepsleep_soc.o
+ .debug_info    0x0002437b      0x4bb ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/startup_si91x.o
+ .debug_info    0x00024836     0x5a5b ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/chip/src/system_si91x.o
+ .debug_info    0x0002a291      0xccd ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/common/src/rsi_debug.o
+ .debug_info    0x0002af5e       0x8f ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/common/src/sl_si91x_stack_object_declare.o
+ .debug_info    0x0002afed      0xbaa ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/common/src/syscalls.o
+ .debug_info    0x0002bb97      0x647 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/core/config/src/rsi_nvic_priorities_config.o
+ .debug_info    0x0002c1de     0x432b ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/cmsis_driver/GSPI.o
+ .debug_info    0x00030509     0x1327 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/cmsis_driver/UDMA.o
+ .debug_info    0x00031830     0x59df ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/cmsis_driver/USART.o
+ .debug_info    0x0003720f     0x394c ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/clock_update.o
+ .debug_info    0x0003ab5b     0x2ed5 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_egpio.o
+ .debug_info    0x0003da30     0x8432 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_gspi.o
+ .debug_info    0x00045e62     0x2991 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_udma.o
+ .debug_info    0x000487f3     0x6e7d ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_udma_wrapper.o
+ .debug_info    0x0004f670     0xb4f7 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/peripheral_drivers/src/rsi_usart.o
+ .debug_info    0x0005ab67     0x3ccd ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/systemlevel/src/rsi_ipmu.o
+ .debug_info    0x0005e834     0x7bd9 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/systemlevel/src/rsi_pll.o
+ .debug_info    0x0006640d     0x5d24 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/systemlevel/src/rsi_ulpss_clk.o
+ .debug_info    0x0006c131     0x2aa3 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/unified_api/src/sl_si91x_dma.o
+ .debug_info    0x0006ebd4     0x36c8 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/unified_api/src/sl_si91x_driver_gpio.o
+ .debug_info    0x0007229c     0x51ea ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/unified_api/src/sl_si91x_gspi.o
+ .debug_info    0x00077486     0x7b65 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/mcu/drivers/unified_peripheral_drivers/src/sl_si91x_peripheral_gpio.o
+ .debug_info    0x0007efeb      0x15b ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/rsi_hal_mcu_m4_ram.o
+ .debug_info    0x0007f146      0xa77 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/rsi_hal_mcu_m4_rom.o
+ .debug_info    0x0007fbbd     0x10dd ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/sl_platform.o
+ .debug_info    0x00080c9a    0x194c7 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/sl_platform_wireless.o
+ .debug_info    0x0009a161      0xba8 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/sl_si91x_bus.o
+ .debug_info    0x0009ad09     0x1125 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ahb_interface/src/sli_siwx917_soc.o
+ .debug_info    0x0009be2e     0x5c91 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ble/src/rsi_bt_ble.o
+ .debug_info    0x000a1abf     0x2fec ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ble/src/rsi_common_apis.o
+ .debug_info    0x000a4aab      0xf7e ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/ble/src/rsi_utils.o
+ .debug_info    0x000a5a29      0x54d ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/errno/src/sl_si91x_errno.o
+ .debug_info    0x000a5f76      0xa1a ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/host_mcu/si91x/siwx917_soc_ncp_host.o
+ .debug_info    0x000a6990      0x98a ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/memory/malloc_buffers.o
+ .debug_info    0x000a731a      0xcf6 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/sl_net/src/sl_net_rsi_utility.o
+ .debug_info    0x000a8010     0x1050 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/sl_net/src/sl_net_si91x_integration_handler.o
+ .debug_info    0x000a9060      0xbbd ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/sl_net/src/sl_si91x_net_credentials.o
+ .debug_info    0x000a9c1d     0x12e9 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/sl_net/src/sl_si91x_net_internal_stack.o
+ .debug_info    0x000aaf06     0x309a ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/socket/src/sl_si91x_socket_utility.o
+ .debug_info    0x000adfa0     0x33cb ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/src/sl_rsi_utility.o
+ .debug_info    0x000b136b      0xae8 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/src/sl_si91x_callback_framework.o
+ .debug_info    0x000b1e53     0x5f4d ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/src/sl_si91x_driver.o
+ .debug_info    0x000b7da0     0x1593 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/src/sl_si91x_http_client_callback_framework.o
+ .debug_info    0x000b9333     0x2d24 ./wiseconnect3_sdk_3.1.4/components/device/silabs/si91x/wireless/threading/sli_si91x_multithreaded.o
+ .debug_info    0x000bc057     0x6cdb ./wiseconnect3_sdk_3.1.4/components/protocol/wifi/si91x/sl_wifi.o
+ .debug_info    0x000c2d32     0x1406 ./wiseconnect3_sdk_3.1.4/components/protocol/wifi/src/sl_wifi_callback_framework.o
+ .debug_info    0x000c4138     0x21f1 ./wiseconnect3_sdk_3.1.4/components/service/http_client/si91x_socket/sl_http_client.o
+ .debug_info    0x000c6329     0x2213 ./wiseconnect3_sdk_3.1.4/components/service/network_manager/si91x/sl_net_si91x.o
+ .debug_info    0x000c853c     0x15fa ./wiseconnect3_sdk_3.1.4/components/service/network_manager/src/sl_net.o
+ .debug_info    0x000c9b36      0xac0 ./wiseconnect3_sdk_3.1.4/components/service/network_manager/src/sl_net_basic_credentials.o
+ .debug_info    0x000ca5f6     0x1284 ./wiseconnect3_sdk_3.1.4/components/service/network_manager/src/sl_net_basic_profiles.o
 
 .debug_abbrev   0x00000000     0xe56e
  .debug_abbrev  0x00000000      0x391 ./app.o
@@ -7941,7 +7941,7 @@ LOAD linker stubs
  .debug_str     0x00000000     0x1921 ./app.o
                                0x1b2a (size before relaxing)
  .debug_str     0x00001921      0x352 ./fatfs_sdcard.o
-                                0xbed (size before relaxing)
+                                0xbe7 (size before relaxing)
  .debug_str     0x00001c73       0x30 ./main.o
                                 0x162 (size before relaxing)
  .debug_str     0x00001ca3      0x10a ./autogen/sl_event_handler.o
