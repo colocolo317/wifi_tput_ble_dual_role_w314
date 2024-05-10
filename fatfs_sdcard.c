@@ -15,15 +15,11 @@
 #include "dummyfile.h"
 #include "sdcard.h"
 
-
-
-
 #define MAX_READ_BUF_LEN 4096
 #define FASTCLKTIME(a) ((a) * 32 / 180)
 /*******************************************************************************
  **********************  Local Function prototypes   ***************************
  ******************************************************************************/
-
 
 const osThreadAttr_t sdcard_thread_attributes = {
   .name       = "sdcard_thread",
@@ -42,7 +38,7 @@ osThreadId_t SDinfoHandle;
 osThreadId_t SDManagerHandle;
 osMutexId_t SDCardMutexHandle;
 
-
+extern char USERPath[4];   /* USER logical drive path */
 
 FATFS FatFs;   // FATFS handle
 FRESULT fres;  // Common result code
@@ -82,69 +78,69 @@ void dmesg(FRESULT fres) {
 
   switch (fres) {
   case FR_OK:
-    printf("Succeeded \n");
+    printf("Succeeded \r\n");
     break;
   case FR_DISK_ERR:
-    printf("A hard error occurred in the low level disk I/O layer \n");
+    printf("A hard error occurred in the low level disk I/O layer \r\n");
     break;
   case FR_INT_ERR:
-    printf("Assertion failed \n");
+    printf("Assertion failed \r\n");
     break;
   case FR_NOT_READY:
-    printf("The physical drive cannot work");
+    printf("The physical drive cannot work\r\n");
     break;
   case FR_NO_FILE:
-    printf("Could not find the file \n");
+    printf("Could not find the file \r\n");
     break;
   case FR_NO_PATH:
-    printf("Could not find the path \n");
+    printf("Could not find the path \r\n");
     break;
   case FR_INVALID_NAME:
-    printf("The path name format is invalid \n");
+    printf("The path name format is invalid \r\n");
     break;
   case FR_DENIED:
-    printf("Access denied due to prohibited access or directory full \n");
+    printf("Access denied due to prohibited access or directory full \r\n");
     break;
   case FR_EXIST:
-    printf("Exist or access denied due to prohibited access \n");
+    printf("Exist or access denied due to prohibited access \r\n");
     break;
   case FR_INVALID_OBJECT:
-    printf("The file/directory object is invalid \n");
+    printf("The file/directory object is invalid \r\n");
     break;
   case FR_WRITE_PROTECTED:
-    printf("The physical drive is write protected \n");
+    printf("The physical drive is write protected \r\n");
     break;
   case FR_INVALID_DRIVE:
-    printf("The logical drive number is invalid \n");
+    printf("The logical drive number is invalid \r\n");
     break;
   case FR_NOT_ENABLED:
-    printf("The volume has no work area");
+    printf("The volume has no work area \r\n");
     break;
   case FR_NO_FILESYSTEM:
-    printf("There is no valid FAT volume");
+    printf("There is no valid FAT volume \r\n");
     break;
   case FR_MKFS_ABORTED:
-    printf("The f_mkfs() aborted due to any parameter error \n");
+    printf("The f_mkfs() aborted due to any parameter error \r\n");
     break;
   case FR_TIMEOUT:
     printf(
-        "Could not get a grant to access the volume within defined period \n");
+        "Could not get a grant to access the volume within defined period \r\n");
     break;
   case FR_LOCKED:
     printf(
-        "The operation is rejected according to the file sharing policy \n");
+        "The operation is rejected according to the file sharing policy \r\n");
     break;
   case FR_NOT_ENOUGH_CORE:
-    printf("LFN working buffer could not be allocated \n");
+    printf("LFN working buffer could not be allocated \r\n");
     break;
   case FR_TOO_MANY_OPEN_FILES:
-    printf("Number of open files > _FS_SHARE \n");
+    printf("Number of open files > _FS_SHARE \r\n");
     break;
   case FR_INVALID_PARAMETER:
-    printf("Given parameter is invalid \n");
+    printf("Given parameter is invalid \r\n");
     break;
   default:
-    printf("An error occured. (%d)\n", fres);
+    printf("An error occured. (%d)\r\n", fres);
   }
 
 }
@@ -192,7 +188,7 @@ void StartSDinfo(void const *argument)
       osMutexAcquire(SDCardMutexHandle, portMAX_DELAY);
 
       printf("\n[SDinfo%03d]: Mount SDCard", cnt++);
-      fres = f_mount(&FatFs, "", 1); // 1 -> Mount now
+      fres = f_mount(&FatFs, (const TCHAR*) USERPath, 1); // 1 -> Mount now
       if (fres == FR_OK)
       {
         // Get some statistics from the SD card
@@ -234,15 +230,16 @@ void StartSDManager(void const *argument) {
   //uint8_t writeBuf[30] = {0};
 
   /* Infinite loop */
-  printf("\nStartSDManager!\n");
+  printf("\r\nStartSDManager!\r\n");
 
   for (;;) {
 
     osMutexAcquire(SDCardMutexHandle, portMAX_DELAY);
 
-    printf("\n[SDManager]: Mount SDCard\r\n");
+    printf("Mounting SDCard\r\n");
+    printf("USERPath: %s\r\n", USERPath);
 
-    fres = f_mount(&FatFs, "", 1); // 1 -> Mount now
+    fres = f_mount(&FatFs, (const TCHAR*) USERPath, 1); // 1 -> Mount now
     if (fres == FR_OK)
     {
         printf("Mount success\r\n");
@@ -348,18 +345,19 @@ void StartSDManager(void const *argument) {
       }
 
       fres=f_close(&fil);
-      if (fres != FR_OK) {dmesg(fres);};
+      dmesg(fres);
+
+      printf("USERPath: %s\r\n", USERPath);
 #endif
 
     } else {
-        printf("\n[SDManager]: ");
       dmesg(fres);
     }
 
     ls("");
 
-    fres=f_mount(NULL, "", 0);
-    if (fres != FR_OK) {dmesg(fres);};
+    fres=f_unmount((const TCHAR*) USERPath);
+    dmesg(fres);
     printf("\n[SDManager]: Unmount SDCard");
 
 
@@ -384,69 +382,63 @@ FIL* sdcard_get_wfile(){
 void fatfs_sdcard_init(void)
 {
 
-  MX_FATFS_Init();
+  MX_FATFS_Init();  /*retUSER = FATFS_LinkDriver(&USER_Driver, USERPath);*/
 
-  printf("\nStartSDManager!\n");
+  printf("\r\nStartSDManager!\r\n");
 
-  printf("\n[SDManager]: Mount SDCard\r\n");
+  printf("Mounting SDCard\r\n");
+  printf("USERPath: %s\r\n", USERPath);
 
-  fres = f_mount(&FatFs, "", 1); // 1 -> Mount now
+  fres = f_mount(&FatFs, (const TCHAR*) USERPath , 1); // 1 -> Mount now
   if (fres == FR_OK)
   {
       printf("Mount success\r\n");
       ls("");
       printf("\r\n");
   }
-  else{ dmesg(fres); }
+  dmesg(fres);
 
   char ofile_name[] = "write2.txt";
   fres = f_unlink(ofile_name);
   if (fres == FR_OK) {
-        printf("\r\nUnlink File \"%s\"\r\n", ofile_name);
+        printf("\r\nUnlink File \"%s\" ", ofile_name);
         bytesWrote = 0; //RESET
     }
-    else{ dmesg(fres); }
+    dmesg(fres);
 
   // Write File
   fres = f_open(&fil, ofile_name, FA_WRITE | FA_OPEN_ALWAYS );
   if (fres == FR_OK) {
-      printf("\r\nFile \"%s\" open\r\n", ofile_name);
+      printf("\r\nFile \"%s\" open ", ofile_name);
       bytesWrote = 0; //RESET
   }
-  else{ dmesg(fres); }
+  dmesg(fres);
 
-
-#if 0
-  SDCardMutexHandle = osMutexNew(NULL);
-  //osMutexRelease(SDCardMutexHandle);
-
-#if 0
-  /* definition and creation of SDinfo */
-  //osThreadDef(SDinfo, StartSDinfo, osPriorityHigh, 0, 140);
-  SDinfoHandle = osThreadNew((osThreadFunc_t)StartSDinfo, NULL, &sdcard_thread_attributes);
-#else
-  SDManagerHandle = osThreadNew((osThreadFunc_t)StartSDManager, NULL, &sdcard_thread_attributes);
-#endif
-  /* definition and creation of SDManager */
-  //osThreadDef(SDManager, StartSDManager, osPriorityRealtime, 0, 300);
-#endif
-
+  printf("USERPath: %s\r\n", USERPath);
 }
+
 void sdcard_ends(){
   FRESULT fres = f_close(&fil);
   if (fres == FR_OK) {
-      printf("\r\nFile closed\r\n");
+      printf("\r\nFile closed ");
   }
-  else{ dmesg(fres); }
+  dmesg(fres);
 
   ls("");
 
-  fres = f_mount(0, ".", 0);
+  printf("USERPath: %s\r\n", USERPath);
+  fres = f_unmount((const TCHAR*) USERPath);
   if (fres == FR_OK) {
-      printf("\n[SDManager]: Unmount SDCard\r\n");
+      printf("\n[SDManager]: Unmount SDCard ");
   }
-  else{ dmesg(fres); }
+  dmesg(fres);
 
+  printf("USERPath: %s\r\n", USERPath);
+  if(FATFS_UnLinkDriver(USERPath) == 0)
+  { printf("FATFS_UnLinkDriver ok\r\n"); }
+  else
+  { printf("FATFS_UnLinkDriver failed\r\n"); }
+  printf("USERPath: %s\r\n", USERPath);
 
 }
 
